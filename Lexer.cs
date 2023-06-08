@@ -13,13 +13,11 @@ public enum TokenType
 }
 public class Token
 {
-    public const string Numbers = "0123456789";
-    public const string Variables = "abcxyz";
+    public static readonly HashSet<char> Variables = "abcxyz".ToHashSet();
+    public static readonly HashSet<string> Trigonometry = new HashSet<string>() 
+        { "sin", "cos", "tan", "csc", "sec", "cot" };
     public const double PI = Math.PI;
     public const double E = Math.E;
-    public static readonly HashSet<string> Trigonometry = new HashSet<string>() 
-        {"sin", "cos", "tan", "csc", "sec", "cot"};
-
     public TokenType type { get; set; }
     public string value { get; set; }
     public Token(TokenType type, string value = "")
@@ -58,19 +56,18 @@ public class Lexer
         pos = pos + step;
         currentChar = pos < text.Length ? text[pos] : '\0';
     }
+
+    bool isDigit()
+    {
+        return currentChar >= '0' && currentChar <= '9';
+    }
     Token parseNumber()
     {
         Token numberToken;
         StringBuilder number = new StringBuilder();
         int periods = 0;
-        
-        if (text[pos] == '-')
-        {
-            number.Append(currentChar);
-            next();
-        }
 
-        while (Token.Numbers.Contains(currentChar) || currentChar == '-')
+        while (isDigit() || currentChar == '.')
         {            
             if (text[pos] == '.')
             {
@@ -101,7 +98,9 @@ public class Lexer
             "csc" => new Token(TokenType.CSC),
             "sec" => new Token(TokenType.SEC),
             "cot" => new Token(TokenType.COT),
-            _ => throw new ArgumentOutOfRangeException(nameof(currentChar), $"Invalid Character: {currentChar}")
+            _ => throw new ArgumentOutOfRangeException(
+                    nameof(currentChar), $"Invalid Character: {currentChar}"
+                )
         };
     }
     public List<Token> parseText()
@@ -114,7 +113,7 @@ public class Lexer
             {
                 next();
             }
-            else if (Token.Numbers.Contains(currentChar))
+            else if (isDigit())
             {
                 tokens.Add(parseNumber());
 
@@ -201,7 +200,7 @@ public class Lexer
             {
                 char charException = currentChar;
                 string unparsed = text.Substring(pos, text.Length - pos);
-                throw new ArgumentOutOfRangeException(nameof(charException), $"Invalid Character: {charException} => {unparsed}");
+                Derivate.Error($"Invalid Character: {charException} [{unparsed}]", pos); 
             }
         }
 

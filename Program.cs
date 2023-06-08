@@ -1,20 +1,16 @@
 ﻿namespace nineT1CD;
-
-public static class ToString
-{
-    public static string Repr(this List<Token> tokens)
-    {
-        return $"[ {String.Join(" , " , tokens.Select(t => t.ToString()))} ]";
-    }
-}
-
-public class Derivate
+public static partial class Derivate
 {
     public static void run(string input)
     {
         var Lexer = new Lexer(input);
         var token = Lexer.parseText();
+
+        var Parser = new Parser(token);
+        var expr = Parser.Parse();
+
         Console.WriteLine(token.Repr());
+        Console.WriteLine(expr.ToString());
     }
     public static void Main(string[] args)
     {
