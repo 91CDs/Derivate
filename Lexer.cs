@@ -13,11 +13,6 @@ public enum TokenType
 }
 public class Token
 {
-    public static readonly HashSet<char> Variables = "abcxyz".ToHashSet();
-    public static readonly HashSet<string> Trigonometry = new HashSet<string>() 
-        { "sin", "cos", "tan", "csc", "sec", "cot" };
-    public const double PI = Math.PI;
-    public const double E = Math.E;
     public TokenType type { get; set; }
     public string value { get; set; }
     public Token(TokenType type, string value = "")
@@ -42,7 +37,9 @@ public class Lexer
         this.text = text;
         this.currentChar = text[0];
     }
-
+    public static readonly HashSet<char> Variables = "abcxyz".ToHashSet();
+    public static readonly HashSet<string> Trigonometry = new HashSet<string>() 
+        { "sin", "cos", "tan", "csc", "sec", "cot" };
     string getString(int offset)
     {   
         while (offset > text.Length - pos)
@@ -53,6 +50,7 @@ public class Lexer
 
     void next(int step = 1) 
     {
+        
         pos = pos + step;
         currentChar = pos < text.Length ? text[pos] : '\0';
     }
@@ -117,25 +115,25 @@ public class Lexer
             {
                 tokens.Add(parseNumber());
 
-                if (Token.Trigonometry.Contains(getString(3))   /* 3sin(3) */
-                    || Token.Variables.Contains(currentChar)    /* 3x */
-                    || getString(3) == "log"                    /* 3log(3) */
-                    || getString(2) == "ln"                     /* 3ln(3) */
-                    || getString(2) == "pi"                     /* 3π */
-                    || currentChar == 'e'                       /* 3e */
-                    || currentChar == '('                       /* 3(10) */
+                if (Trigonometry.Contains(getString(3))   /* 3sin(3) */
+                    || Variables.Contains(currentChar)    /* 3x */
+                    || getString(3) == "log"              /* 3log(3) */
+                    || getString(2) == "ln"               /* 3ln(3) */
+                    || getString(2) == "pi"               /* 3π */
+                    || currentChar == 'e'                 /* 3e */
+                    || currentChar == '('                 /* 3(10) */
                 )
                     tokens.Add(new Token(TokenType.MUL)); 
 
             }
-            else if (Token.Trigonometry.Contains(getString(3)))
+            else if (Trigonometry.Contains(getString(3)))
             {
                 tokens.Add(parseTrigFunctions());
                 next(3);
             }
-            else if (Token.Variables.Contains(currentChar))
+            else if (Variables.Contains(currentChar))
             {
-                tokens.Add(new Token(TokenType.VAR));
+                tokens.Add(new Token(TokenType.VAR, currentChar.ToString()));
                 next();
             }
             else if (currentChar == '+')
