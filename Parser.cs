@@ -2,55 +2,6 @@ using System.Text;
 using static nineT1CD.TokenType;
 
 namespace nineT1CD;
-
-public class Node
-{
-
-    public Token value { get; set; }
-    public Node? left { get; set; }
-    public Node? right { get; set; }
-
-    public Node(Token value)
-    {
-        this.value = value;
-    }
-
-    public Node(Token value, Node right)
-    {
-        this.value = value;
-        this.right = right;
-    }
-
-    public Node(Token value, Node left, Node right)
-    {
-        this.value = value;
-        this.left = left;
-        this.right = right;
-    }
-
-    public override string ToString()
-    {
-        StringBuilder nodeRepr = new StringBuilder("()");
-
-        int index() {
-            return nodeRepr.Length == 0 ? 0 : nodeRepr.Length - 1;
-        }
-
-        if (left == null && right == null)
-            nodeRepr.Clear();
-
-        if (left != null)
-            nodeRepr.Insert(index(), $" { left.ToString() } ");
-
-        nodeRepr.Insert(index(), value.ToString());
-
-        if (right != null)
-            nodeRepr.Insert(index(), $" { right.ToString() } ");
-
-        return nodeRepr.ToString();
-    }
-}
-
 public class Parser
 {
     int pos = 0;
@@ -114,42 +65,42 @@ public class Parser
 
     Node expression()
     {
-        Node left = exponent();
+        Node l = term();
 
         while (match(ADD, SUB))
         {
             Token op = previous();
-            Node right = exponent();
-            left = new Node(op, left, right);
+            Node r = term();
+            l = new Binary(l, op, r);
         }
 
-        return left;
-    }
-    Node exponent()
-    {
-        Node right = term();
-
-        while (match(EXP))
-        {
-            Token op = previous();
-            Node left = term();
-            right = new Node(op, left, right);
-        }
-
-        return right;
+        return l;
     }
     Node term()
     {
-        Node left = unary();
+        var l = exponent();
 
         while (match(MUL, DIV))
         {
             Token op = previous();
-            Node right = unary();
-            left = new Node(op, left, right);
+            var r = exponent();
+
+            l = new Binary(l, op, r);
+        }
+        return l;
+    }
+    Node exponent()
+    {
+        Node l = unary();
+
+        if (match(EXP))
+        {
+            Token op = previous();
+            Node r = exponent();
+            l = new Binary(l, op, r);
         }
 
-        return left;
+        return l;
     }
 
     Node unary()
@@ -157,8 +108,8 @@ public class Parser
         while (match(SIN, COS, TAN, CSC, SEC, COT, LOG, LN, SUB))
         {
             Token op = previous();
-            Node right = factor();
-            return new Node(op, right);
+            var r = factor();
+            return new Unary(op, r);
         }
 
         return factor();
@@ -166,17 +117,21 @@ public class Parser
 
     Node factor()
     {   
-        if (match(INT, FLOAT, VAR, CONST))
-            return new Node(previous());
+        if (match(INT))
+            return new Literal(int.Parse(previous().value));
+        if (match(FLOAT, CONST))
+            return new Literal(double.Parse(previous().value));
+        if (match(VAR))
+            return new Literal(previous());
 
         if (match(LPAREN))
         {
             Node expr = expression();
             consume(RPAREN,  "Expected ')'");
-            return expr;
+            return new Grouping(expr);
         }
 
-        Derivate.Error("Expected a valid expression", pos);
+        Derivate.Error("Expected a valid expression", pos + 1);
         throw new Exception();
     }
 

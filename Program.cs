@@ -8,9 +8,16 @@ public static partial class Derivate
 
         var Parser = new Parser(token);
         var expr = Parser.Parse();
+        var function = new Derivative().dx(expr);
 
+        Console.WriteLine();
         Console.WriteLine(token.Repr());
-        Console.WriteLine(expr.ToString());
+        Console.WriteLine("AST::");
+        Console.WriteLine(new ASTPrint().print(expr));
+        Console.WriteLine("Derivative::");
+        Console.WriteLine(new FunctionPrint().print(function));
+        Console.WriteLine();
+
     }
     public static void Main(string[] args)
     {
