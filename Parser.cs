@@ -2,6 +2,14 @@ using System.Text;
 using static nineT1CD.TokenType;
 
 namespace nineT1CD;
+
+/* 
+TODO:
+
+[x] (x Num) case invalid
+[x] (Var Var) case invalid
+
+ */
 public class Parser
 {
     int pos = 0;
@@ -60,7 +68,7 @@ public class Parser
             return;
         }
 
-        Derivate.Error(err, pos);
+        throw Derivate.ParserError(err, pos);
     }
 
     Node expression()
@@ -73,7 +81,7 @@ public class Parser
             Node r = term();
             l = new Binary(l, op, r);
         }
-
+   
         return l;
     }
     Node term()
@@ -131,13 +139,23 @@ public class Parser
             return new Grouping(expr);
         }
 
-        Derivate.Error("Expected a valid expression", pos + 1);
-        throw new Exception();
+        throw Derivate.ParserError($"Expected a valid expression [{tokens[pos].ToString()}]", pos + 1);
     }
 
     public Node Parse()
     {
-        return expression();
+        try
+        {
+            var expr = expression();
+            if (pos < tokens.Count) 
+                throw Derivate.ParserError($"Expected a valid expression [{tokens[pos].ToString()}]", pos + 1);
+            return expr;
+        }
+        catch (ParseError)
+        {
+            Environment.Exit(0);
+            return null;
+        }
     }
 }
 

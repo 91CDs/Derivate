@@ -1,6 +1,5 @@
 namespace nineT1CD;
 using static nineT1CD.TokenType;
-public record Func(Node f, Node df);
 
 public class Derivative : NodeVisitor<Node>
 {   
@@ -77,7 +76,7 @@ public class Derivative : NodeVisitor<Node>
             
             if (n == Math.E)
                 return new Binary( 
-                    dx(l),
+                    dx(r),
                     new Token(MUL),
                     new Binary(l, new Token(EXP), r)
                 );

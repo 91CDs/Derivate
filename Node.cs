@@ -50,6 +50,11 @@ public sealed class Literal : Node
     {
         return type;
     }
+
+    public double getValue() 
+    {
+        return double.Parse(this.value.ToString()!);
+    }
 }
 
 public sealed class Grouping : Node
