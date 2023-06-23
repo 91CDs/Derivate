@@ -51,6 +51,13 @@ public sealed class FunctionPrint : NodeVisitor<string>
         {TokenType.DIV, "/"},
         {TokenType.EXP, "^"}
     };
+    public bool hasVar(Node node)
+    {
+        Binary? binary = node as Binary;
+        if (binary == null) return false;
+
+        return binary.left.getType() == TokenType.VAR;
+    }
     public string print(Node expr)
     {
         return expr.accept<string>(this);
@@ -60,16 +67,17 @@ public sealed class FunctionPrint : NodeVisitor<string>
         if (node.operation.type == TokenType.MUL)
         {
             bool isVar = node.right.getType() == TokenType.VAR;
+            bool isVarExp = node.right.getType() == TokenType.EXP && hasVar(node.right);
             bool isGrouping = node.left as Grouping != null || node.right as Grouping != null;
 
-            if (isVar || isGrouping)
+            if (isVar || isGrouping || isVarExp)
                 return $"{print(node.left)}{print(node.right)}";
         }
 
         if (node.operation.type == TokenType.EXP)
             return $"{print(node.left)}{converter.GetValueOrDefault(node.operation.type)}{print(node.right)}";
 
-        return $"{print(node.left)} {converter.GetValueOrDefault(node.operation.type)} {print(node.right)}";
+        return $"({print(node.left)} {converter.GetValueOrDefault(node.operation.type)} {print(node.right)})";
     }
     public string visitUnary(Unary node)
     {
@@ -80,6 +88,14 @@ public sealed class FunctionPrint : NodeVisitor<string>
     }
     public string visitLiteral(Literal node)
     {
+        double num;
+        double.TryParse(node.value.ToString(), out num);
+        if (num == Math.E)
+            return "e";
+        if (num == Math.PI)
+            return "pi";
+
+        
         return node.value.ToString()!;
     }
 

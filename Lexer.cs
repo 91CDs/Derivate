@@ -9,7 +9,8 @@ public enum TokenType
     SIN, COS, TAN, CSC, SEC, COT,
     LPAREN, RPAREN, 
     INT, FLOAT, CONST,
-    VAR
+    VAR,
+    UNDEFINED, DNE /* for no answer */
 }
 public class Token
 {
@@ -198,7 +199,7 @@ public class Lexer
             {
                 char charException = currentChar;
                 string unparsed = text.Substring(pos, text.Length - pos);
-                Derivate.Error($"Invalid Character: {charException} [{unparsed}]", pos); 
+                Derivate.LexerError($"Invalid Character: {charException} [{unparsed}]", pos); 
             }
         }
 
