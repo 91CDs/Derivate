@@ -12,6 +12,15 @@ public abstract class Node
 {
     public abstract T accept<T>(NodeVisitor<T> visitor);
     public abstract TokenType getType();
+    public static bool checkType(Node node, params TokenType[] types)
+    {
+        foreach (var type in types)
+        {
+            if (node.getType() == type) return true;
+        }
+        
+        return false;
+    }
 }
 
 public sealed class Literal : Node
@@ -53,7 +62,10 @@ public sealed class Literal : Node
 
     public double getValue() 
     {
-        return double.Parse(this.value.ToString()!);
+        return double.Parse(
+            this.value.ToString() 
+            ?? throw new ArgumentException(nameof(value), "value is not a number")
+        );
     }
 }
 

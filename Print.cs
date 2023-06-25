@@ -1,10 +1,45 @@
 namespace nineT1CD;
 
-public static class Debug
+public static class Print
 {
     public static string Repr(this List<Token> tokens)
     {
         return $"[ { String.Join(" , ", tokens.Select(t => t.ToString())) } ]";
+    }
+    
+    public static void PolynomialChecker(Node expr)
+    {
+        string printed = new ASTPrint().print(expr);
+
+        bool isTerm = Term.TryParseTerm(expr, out Term term);
+        Console.WriteLine($"Is it a term? [{printed}] : {isTerm} => {term}");
+
+        bool isPolynomial = Polynomial.TryParsePolynomial(expr, out Polynomial polyn);
+        Console.WriteLine($"Is it a polynomial? [{printed}] : {isPolynomial} => {polyn}");
+    }
+
+    public static void printTokens(this List<Token> tokens)
+    {
+        Console.WriteLine("\nTOKENIZER::");
+        Console.WriteLine(":::::::::::");
+        Console.WriteLine(tokens.Repr());
+    }
+
+    public static void printAST(this Node AST, Node? simplifiedAST = null)
+    {
+        Console.WriteLine("\nAST::");
+        Console.WriteLine(":::::");
+        Console.WriteLine(new ASTPrint().print(AST));
+        if (simplifiedAST != null)
+            Console.WriteLine(new ASTPrint().print(simplifiedAST));
+    }
+    public static void printFunction(this Node Function, Node? simplifiedFunction = null)
+    {
+        Console.WriteLine("\nFUNCTION::");
+        Console.WriteLine("::::::::::");
+        Console.WriteLine(new FunctionPrint().print(Function));
+        if (simplifiedFunction != null)
+            Console.WriteLine(new FunctionPrint().print(simplifiedFunction));
     }
 }
 
