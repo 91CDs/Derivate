@@ -1,6 +1,6 @@
-namespace nineT1CD;
-using static nineT1CD.TokenType;
-using static nineT1CD.Term;
+using static Derivate.TokenType;
+using static Derivate.Term;
+namespace Derivate;
 public enum Sign
 {
     Positive,
@@ -9,38 +9,49 @@ public enum Sign
 
 public struct Term
 {
-    public Sign sign { get; set; }
     public int coefficient { get; set; }
     public string variable { get; set; } = "x";
     public int exponent { get; set; } = default;
-    public Term(Sign sign, Literal cf)
+    public Term(Literal cf, Sign? sign = null)
     {
-        this.sign = sign;
-        coefficient = (int)cf.getValue();
+        var num = (int)cf.getValue();
+        coefficient = sign == Sign.Negative ? -num : num;
     }
-    public Term(Sign sign, Literal cf, Literal var)
+    public Term(Literal cf, Literal var, Sign? sign = null)
     {
-        this.sign = sign;
-        coefficient = (int)cf.getValue();
+        var num = (int)cf.getValue();
+        coefficient = sign == Sign.Negative ? -num : num;
         variable = var.value.ToString()!;
         exponent = 1;
     }
-    public Term(Sign sign, Literal cf, Literal var, Literal exp)
+    public Term(Literal cf, Literal var, Literal exp, Sign? sign = null)
     {
-        this.sign = sign;
-        coefficient = (int)cf.getValue();
+        var num = (int)cf.getValue();
+        coefficient = sign == Sign.Negative ? -num : num;
         exponent = (int)exp.getValue();
         variable = var.value.ToString()!;
     }
 
-    public string getSign()
+    public Term(int cf, string var, int exp)
     {
-        return sign == Sign.Negative ? "-" : "+";
+        coefficient = cf;
+        variable = var;
+        exponent = exp;
+    }
+
+    public int calculateSign(Sign sign, int number)
+    {
+        return sign == Sign.Negative ? -number : number;
+    }
+
+    public Sign getSign()
+    {
+        return coefficient < 0 ? Sign.Negative : Sign.Positive;
     }
 
     public Term reversedSign()
     {
-        sign = sign == Sign.Positive ? Sign.Negative : Sign.Positive;
+        coefficient = -coefficient;
         return this;
     }
     public static bool TryParseTerm(Node node, out Term output)
@@ -60,7 +71,7 @@ public struct Term
         constant = node as Literal;
         if (constant != null) 
         {
-            output = new Term(sign, constant);
+            output = new Term(constant, sign);
             return isNumber(constant.type);
         }
 
@@ -73,7 +84,7 @@ public struct Term
             var = term.right as Literal;
             if (var != null && cfNode != null)
             {
-                output = new Term(sign, cfNode, var);
+                output = new Term(cfNode, var, sign);
                 return (isNumber(cfNode.type) && true)|| var.type == VAR;
             }
 
@@ -86,7 +97,7 @@ public struct Term
 
                 if (varNode != null && powNode != null)
                 {
-                    output = new Term(sign, cfNode, varNode, powNode);
+                    output = new Term(cfNode, varNode, powNode, sign);
                     return (isNumber(cfNode.type) && true)
                     || varNode.type == VAR 
                     || isNumber(powNode.type); 
@@ -96,6 +107,34 @@ public struct Term
         
         output = default;
         return false;
+    }
+
+    public static bool isLikeTerm(Term a, Term b)
+    {
+        return a.variable == b.variable && a.exponent == b.exponent;
+    }
+
+    public static Term operator +(Term a, Term b)
+    {
+        if (!isLikeTerm(a,b))
+            throw new ArgumentException("The two terms are not like terms.");
+
+        return new Term(a.coefficient + b.coefficient, a.variable, a.exponent);
+    }
+    public static Term operator -(Term a, Term b)
+    {
+        if (!isLikeTerm(a,b))
+            throw new ArgumentException("The two terms are not like terms.");
+
+        return new Term(a.coefficient - b.coefficient, a.variable, a.exponent);
+    }
+    public static Term operator *(Term a, Term b)
+    {
+        return new Term(a.coefficient * b.coefficient, a.variable, a.exponent + b.exponent);
+    }
+    public static Term operator /(Term a, Term b)
+    {
+        return new Term(a.coefficient / b.coefficient, a.variable, a.exponent - b.exponent);
     }
 
     public override string? ToString()
@@ -136,9 +175,9 @@ public struct Polynomial
         return String.Join("", 
             terms.Select((t, order) => 
             {
-                var sign = order == 0 && t.sign == Sign.Positive 
+                var sign = order == 0 && t.getSign() == Sign.Positive
                     ? String.Empty 
-                    : $" {t.getSign()} ";
+                    : $" {(t.getSign() == Sign.Positive ? "+" : "-")} ";
                 return $"{sign}{t.ToString()}";
             })
         );

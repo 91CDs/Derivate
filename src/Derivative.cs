@@ -1,5 +1,5 @@
-namespace nineT1CD;
-using static nineT1CD.TokenType;
+using static Derivate.TokenType;
+namespace Derivate;
 
 public class Derivative : NodeVisitor<Node>
 {   

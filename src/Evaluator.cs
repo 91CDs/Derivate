@@ -7,16 +7,16 @@ TODO: Polynomial Simplification
 [] Adding PolyN
    [x] + (num num)                 
    [x] + (a 0 or 0 a)                    = a
-   [] + (MonoN MonoN)             (basic) Like 
-   [] + (MonoN MonoN)             (basic) Unlike 
+   [x] + (MonoN MonoN)             (basic) Like 
+   [x] + (MonoN MonoN)             (basic) Unlike 
    [] + (PolyN PolyN)             Unlike
    [] + (MonoN MonoN .. PolyN)    Like
    [] + (PolyN MonoN .. PolyN)    Like
 [] Subtracting PolyN [SAME IMPL]
    [x] - (num num)                 
    [x] - (a 0 or 0 a)                    = a
-   [] - (MonoN MonoN)             (basic) Like 
-   [] - (MonoN MonoN)             (basic) Unlike 
+   [x] - (MonoN MonoN)             (basic) Like 
+   [x] - (MonoN MonoN)             (basic) Unlike 
    [] - (PolyN PolyN)             Unlike
    [] - (MonoN MonoN .. PolyN)    Like
    [] - (PolyN MonoN .. PolyN)    Like
@@ -24,16 +24,16 @@ TODO: Polynomial Simplification
    [x] * (num num)                 
    [x] * (a 0 or 0 a)                    = 0
    [x] * (a 1 or 1 a)                    = a
-   [] * (MonoN MonoN)             (basic)
-       [] * (Exp Exp)             Product Rule of Exponents
+   [x] * (MonoN MonoN)             (basic)
+       [x] * (Exp Exp)             Product Rule of Exponents
    [] * (PolyN MonoN .. PolyN)    Foil Method
 [] Dividing PolyN
    [x] / (num num)                
    [x] / (a 0)                    undefined
    [x] / (0 a)                    = 0
    [x] / (a 1)                    = a
-   [] / (MonoN MonoN)             (basic)
-       [] / (Exp Exp)             Quotient Rule of Exponents
+   [x] / (MonoN MonoN)             (basic)
+       [x] / (Exp Exp)             Quotient Rule of Exponents
    [] / (PolyN MonoN)             Separate Terms then do basic division
    [] / (PolyN PolyN)             Long Division Method
 [] Change layout to be based on operations instead of node content
@@ -50,9 +50,9 @@ TODO: Polynomial Simplification
    [] (a/b)^e                     Power of a quotient Rule
 */
 
-namespace nineT1CD;
-using static nineT1CD.TokenType;
+using static Derivate.TokenType;
 
+namespace Derivate;
 public class Evaluator : NodeVisitor<Node>
 {
     public Node eval(Node expr)
@@ -83,14 +83,6 @@ public class Evaluator : NodeVisitor<Node>
         var type = node.getType();
         return type == VAR;
     }
-
-    /* Term = [-] Cx^E
-    Poly = Term [+ or -] Term */
-/*     
-    bool isPolynomial(Node node, out Node[] terms)
-    {   
-    } 
-*/
     bool hasNumber(Node node)
     {
         var type = node.GetType();

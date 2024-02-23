@@ -1,7 +1,7 @@
 using System.Text;
-using static nineT1CD.TokenType;
+using static Derivate.TokenType;
 
-namespace nineT1CD;
+namespace Derivate;
 
 /* 
 TODO:
@@ -125,10 +125,10 @@ public class Parser
 
     Node factor()
     {   
-        if (match(INT))
-            return new Literal(int.Parse(previous().value));
-        if (match(FLOAT, CONST))
-            return new Literal(double.Parse(previous().value));
+        // if (match(INT))
+        //     return new Literal(int.Parse(previous().value));
+        // if (match(FLOAT, CONST))
+        //     return new Literal(double.Parse(previous().value));
         if (match(VAR))
             return new Literal(previous());
 

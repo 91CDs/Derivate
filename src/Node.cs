@@ -1,5 +1,5 @@
 
-namespace nineT1CD;
+namespace Derivate;
 
 public interface NodeVisitor<T>
 {
@@ -25,7 +25,7 @@ public abstract class Node
 
 public sealed class Literal : Node
 {
-    public Object value { get; set; }
+    public object value { get; set; }
     public TokenType type { get; set; }
     public Literal(Token token)
     {
@@ -35,7 +35,7 @@ public sealed class Literal : Node
     public Literal(int value)
     {
         this.value = value;
-        this.type = TokenType.INT;
+        type = TokenType.INT;
     }
     public Literal(double value)
     {
