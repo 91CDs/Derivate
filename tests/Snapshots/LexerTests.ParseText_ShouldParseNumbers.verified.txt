@@ -1,0 +1,10 @@
+﻿[
+  {
+    type: INT,
+    value: 1234567890
+  },
+  {
+    type: FLOAT,
+    value: 3.4
+  }
+]

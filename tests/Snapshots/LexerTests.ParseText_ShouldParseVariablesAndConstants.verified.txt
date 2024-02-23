@@ -1,0 +1,55 @@
+﻿[
+  {
+    type: VAR,
+    value: "x"
+  },
+  {
+    type: MUL
+  },
+  {
+    type: VAR,
+    value: "y"
+  },
+  {
+    type: MUL
+  },
+  {
+    type: VAR,
+    value: "z"
+  },
+  {
+    type: MUL
+  },
+  {
+    type: CONST,
+    value: 3.141592653589793
+  },
+  {
+    type: MUL
+  },
+  {
+    type: VAR,
+    value: "a"
+  },
+  {
+    type: MUL
+  },
+  {
+    type: VAR,
+    value: "b"
+  },
+  {
+    type: MUL
+  },
+  {
+    type: VAR,
+    value: "c"
+  },
+  {
+    type: MUL
+  },
+  {
+    type: CONST,
+    value: 2.718281828459045
+  }
+]

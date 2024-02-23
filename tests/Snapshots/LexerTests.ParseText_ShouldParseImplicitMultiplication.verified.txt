@@ -1,0 +1,80 @@
+﻿[
+  {
+    type: RPAREN
+  },
+  {
+    type: MUL
+  },
+  {
+    type: VAR,
+    value: "x"
+  },
+  {
+    type: RPAREN
+  },
+  {
+    type: MUL
+  },
+  {
+    type: SIN
+  },
+  {
+    type: RPAREN
+  },
+  {
+    type: MUL
+  },
+  {
+    type: LN
+  },
+  {
+    type: RPAREN
+  },
+  {
+    type: MUL
+  },
+  {
+    type: CONST,
+    value: 3.141592653589793
+  },
+  {
+    type: RPAREN
+  },
+  {
+    type: MUL
+  },
+  {
+    type: LPAREN
+  },
+  {
+    type: RPAREN
+  },
+  {
+    type: INT,
+    value: 3
+  },
+  {
+    type: MUL
+  },
+  {
+    type: CONST,
+    value: 2.718281828459045
+  },
+  {
+    type: FLOAT,
+    value: 3.5
+  },
+  {
+    type: MUL
+  },
+  {
+    type: VAR,
+    value: "y"
+  },
+  {
+    type: MUL
+  },
+  {
+    type: LPAREN
+  }
+]
