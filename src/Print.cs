@@ -4,7 +4,7 @@ public static class Print
 {
     public static string Repr(this List<Token> tokens)
     {
-        return $"[ { String.Join(" , ", tokens.Select(t => t.ToString())) } ]";
+        return $"[ {string.Join(" , ", tokens.Select(t => t.ToString())) } ]";
     }
     
     public static void PolynomialChecker(Node expr)
@@ -45,10 +45,7 @@ public static class Print
 
 public sealed class ASTPrint : NodeVisitor<string>
 {
-    public string print(Node expr)
-    {
-        return expr.accept<string>(this);
-    }
+    public string print(Node expr) => expr.accept<string>(this);
     public string visitBinary(Binary node)
     {
         return $"( {print(node.left)} {node.operation} {print(node.right)} )";

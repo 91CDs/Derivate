@@ -2,14 +2,6 @@ using System.Text;
 using static Derivate.TokenType;
 
 namespace Derivate;
-
-/* 
-TODO:
-
-[x] (x Num) case invalid
-[x] (Var Var) case invalid
-
- */
 public class Parser
 {
     int pos = 0;
@@ -84,6 +76,7 @@ public class Parser
    
         return l;
     }
+
     Node term()
     {
         var l = exponent();
@@ -97,6 +90,7 @@ public class Parser
         }
         return l;
     }
+
     Node exponent()
     {
         Node l = unary();
@@ -139,7 +133,7 @@ public class Parser
             return new Grouping(expr);
         }
 
-        throw Derivate.ParserError($"Expected a valid expression [{tokens[pos].ToString()}]", pos + 1);
+        throw Derivate.ParserError($"Expected a valid expression [{tokens[pos]}]", pos + 1);
     }
 
     public Node Parse()
@@ -148,7 +142,7 @@ public class Parser
         {
             var expr = expression();
             if (pos < tokens.Count) 
-                throw Derivate.ParserError($"Expected a valid expression [{tokens[pos].ToString()}]", pos + 1);
+                throw Derivate.ParserError($"Expected a valid expression [{tokens[pos]}]", pos + 1);
             return expr;
         }
         catch (ParseError)

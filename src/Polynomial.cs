@@ -140,10 +140,10 @@ public struct Term
     public override string? ToString()
     {
         string exponentStr = exponent == 0 || exponent == 1
-            ? String.Empty
-            : $"^{exponent.ToString()}";
+            ? string.Empty
+            : $"^{exponent}";
         string variableStr = exponent == 0
-            ? String.Empty
+            ? string.Empty
             : variable;
         return $"{coefficient}{variableStr}{exponentStr}";
     }
@@ -172,13 +172,13 @@ public struct Polynomial
 
     public override string? ToString()
     {
-        return String.Join("", 
+        return string.Join("", 
             terms.Select((t, order) => 
             {
                 var sign = order == 0 && t.getSign() == Sign.Positive
-                    ? String.Empty 
+                    ? string.Empty 
                     : $" {(t.getSign() == Sign.Positive ? "+" : "-")} ";
-                return $"{sign}{t.ToString()}";
+                return $"{sign}{t}";
             })
         );
     }
