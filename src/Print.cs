@@ -2,22 +2,15 @@ namespace Derivate;
 
 public static class Print
 {
+    public static bool match(this TokenType type, params TokenType[] types)
+    {
+        return new List<TokenType>(types).Contains(type);
+    }
     public static string Repr(this List<Token> tokens)
     {
         return $"[ {string.Join(" , ", tokens.Select(t => t.ToString())) } ]";
     }
     
-    public static void PolynomialChecker(Node expr)
-    {
-        string printed = new ASTPrint().print(expr);
-
-        bool isTerm = Term.TryParseTerm(expr, out Term term);
-        Console.WriteLine($"Is it a term? [{printed}] : {isTerm} => {term}");
-
-        bool isPolynomial = Polynomial.TryParsePolynomial(expr, out Polynomial polyn);
-        Console.WriteLine($"Is it a polynomial? [{printed}] : {isPolynomial} => {polyn}");
-    }
-
     public static void printTokens(this List<Token> tokens)
     {
         Console.WriteLine("\nTOKENIZER::");
@@ -33,6 +26,7 @@ public static class Print
         if (simplifiedAST != null)
             Console.WriteLine(new ASTPrint().print(simplifiedAST));
     }
+
     public static void printFunction(this Node Function, Node? simplifiedFunction = null)
     {
         Console.WriteLine("\nFUNCTION::");
@@ -41,98 +35,70 @@ public static class Print
         if (simplifiedFunction != null)
             Console.WriteLine(new FunctionPrint().print(simplifiedFunction));
     }
+
+    // public static void PolynomialChecker(INode expr)
+    // {
+    //     string printed = new ASTPrint().print(expr);
+
+    //     bool isTerm = Term.TryParseTerm(expr, out Term term);
+    //     Console.WriteLine($"Is it a term? [{printed}] : {isTerm} => {term}");
+
+    //     bool isPolynomial = Polynomial.TryParsePolynomial(expr, out Polynomial polyn);
+    //     Console.WriteLine($"Is it a polynomial? [{printed}] : {isPolynomial} => {polyn}");
+    // }
 }
 
 public sealed class ASTPrint : NodeVisitor<string>
 {
-    public string print(Node expr) => expr.accept<string>(this);
+    public string print(Node expr) => expr.accept(this);
     public string visitBinary(Binary node)
     {
-        return $"( {print(node.left)} {node.operation} {print(node.right)} )";
+        return $"({print(node.left)}){node.token.value}({print(node.right)})";
     }
     public string visitUnary(Unary node)
     {
-        return $"( {node.operation} {print(node.right)} )";
+        return $"{node.token.value}({print(node.right)})";
     }
     public string visitLiteral(Literal node)
     {
-        return node.value.ToString()!;
-    }
-
-    public string visitGrouping(Grouping grouping)
-    {
-        return $"( g {print(grouping.expr)} )";
+        if (node.token.type is TokenType.CONST)
+            return Token.MathConstants((double) node.token.value);
+            
+        return node.token.value.ToString()!;
     }
 }
 public sealed class FunctionPrint : NodeVisitor<string>
 {
-    Dictionary<TokenType, string> converter = 
-    new Dictionary<TokenType, string>()
-    {
-        {TokenType.SIN, "sin"},
-        {TokenType.COS, "cos"},
-        {TokenType.TAN, "tas"},
-        {TokenType.CSC, "csc"},
-        {TokenType.SEC, "sec"},
-        {TokenType.COT, "cot"},
-        {TokenType.LOG, "log"},
-        {TokenType.LN,  "ln"},
-        {TokenType.ADD, "+"},
-        {TokenType.SUB, "-"},
-        {TokenType.MUL, "*"},
-        {TokenType.DIV, "/"},
-        {TokenType.EXP, "^"}
-    };
-    public bool hasVar(Node node)
-    {
-        Binary? binary = node as Binary;
-        if (binary == null) return false;
-
-        return binary.left.getType() == TokenType.VAR;
-    }
     public string print(Node expr)
     {
-        return expr.accept<string>(this);
+        return expr.accept(this);
+    }
+    public bool hasVariable(Node node)
+    {
+        if (node is Binary binary)
+        {
+            return binary.left.token.type == TokenType.VAR;
+        }
+
+        return false;
     }
     public string visitBinary(Binary node)
     {
-        if (node.operation.type == TokenType.MUL)
+        bool isVar = node.right.token.type == TokenType.VAR;
+        bool isVarExp = node.right.token.type == TokenType.EXP && hasVariable(node.right);
+        if (node.token.type == TokenType.MUL && (isVar || isVarExp))
         {
-            bool isVar = node.right.getType() == TokenType.VAR;
-            bool isVarExp = node.right.getType() == TokenType.EXP && hasVar(node.right);
-            bool isGrouping = node.left as Grouping != null || node.right as Grouping != null;
-
-            if (isVar || isGrouping || isVarExp)
-                return $"{print(node.left)}{print(node.right)}";
+            return $" {print(node.left)}{print(node.right)} ";
         }
 
-        if (node.operation.type == TokenType.EXP)
-            return $"{print(node.left)}{converter.GetValueOrDefault(node.operation.type)}{print(node.right)}";
-
-        return $"({print(node.left)} {converter.GetValueOrDefault(node.operation.type)} {print(node.right)})";
+        return $"{print(node.left)} {node.token.value} {print(node.right)}";
     }
     public string visitUnary(Unary node)
     {
-        if (node.operation.type == TokenType.SUB)
-            return $"-{print(node.right)}";
-
-        return $"{converter.GetValueOrDefault(node.operation.type)}({print(node.right)})";
+        return $"{node.token.value}({print(node.right)})";
     }
     public string visitLiteral(Literal node)
     {
-        double num;
-        double.TryParse(node.value.ToString(), out num);
-        if (num == Math.E)
-            return "e";
-        if (num == Math.PI)
-            return "pi";
-
-        
-        return node.value.ToString()!;
-    }
-
-    public string visitGrouping(Grouping node)
-    {
-        return $"({print(node.expr)})";
+        return node.token.value.ToString()!;
     }
 }

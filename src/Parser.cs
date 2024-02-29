@@ -1,11 +1,8 @@
-using System.Text;
-using static Derivate.TokenType;
-
 namespace Derivate;
 public class Parser
 {
     int pos = 0;
-    List<Token> tokens;
+    readonly List<Token> tokens;
     public Parser(List<Token> tokens)
     {
         this.tokens = tokens;
@@ -28,7 +25,7 @@ public class Parser
     }  
     bool isAtEnd()
     {
-        return pos == tokens.Count;
+        return current().type == TokenType.EOF;
     }
 
     bool check(TokenType type)
@@ -67,7 +64,7 @@ public class Parser
     {
         Node l = term();
 
-        while (match(ADD, SUB))
+        while (match(TokenType.ADD, TokenType.SUB))
         {
             Token op = previous();
             Node r = term();
@@ -81,7 +78,7 @@ public class Parser
     {
         var l = exponent();
 
-        while (match(MUL, DIV))
+        while (match(TokenType.MUL, TokenType.DIV))
         {
             Token op = previous();
             var r = exponent();
@@ -95,7 +92,7 @@ public class Parser
     {
         Node l = unary();
 
-        if (match(EXP))
+        if (match(TokenType.EXP))
         {
             Token op = previous();
             Node r = exponent();
@@ -107,7 +104,10 @@ public class Parser
 
     Node unary()
     {
-        while (match(SIN, COS, TAN, CSC, SEC, COT, LOG, LN, SUB))
+        while (match(
+            TokenType.SIN, TokenType.COS, TokenType.TAN, TokenType.CSC, TokenType.SEC, 
+            TokenType.COT, TokenType.LOG, TokenType.LN, TokenType.SUB
+        ))
         {
             Token op = previous();
             var r = factor();
@@ -119,18 +119,14 @@ public class Parser
 
     Node factor()
     {   
-        // if (match(INT))
-        //     return new Literal(int.Parse(previous().value));
-        // if (match(FLOAT, CONST))
-        //     return new Literal(double.Parse(previous().value));
-        if (match(VAR))
+        if (match(TokenType.INT, TokenType.FLOAT, TokenType.CONST, TokenType.VAR))
             return new Literal(previous());
 
-        if (match(LPAREN))
+        if (match(TokenType.LPAREN))
         {
             Node expr = expression();
-            consume(RPAREN,  "Expected ')'");
-            return new Grouping(expr);
+            consume(TokenType.RPAREN,  "Expected ')'");
+            return expr;
         }
 
         throw Derivate.ParserError($"Expected a valid expression [{tokens[pos]}]", pos + 1);
@@ -138,18 +134,7 @@ public class Parser
 
     public Node Parse()
     {
-        try
-        {
-            var expr = expression();
-            if (pos < tokens.Count) 
-                throw Derivate.ParserError($"Expected a valid expression [{tokens[pos]}]", pos + 1);
-            return expr;
-        }
-        catch (ParseError)
-        {
-            Environment.Exit(0);
-            return null;
-        }
+        return expression();
     }
 }
 
@@ -158,7 +143,6 @@ Factor
     Number
     | Variable
     | Constant
-    | 
 
 Unary
     TRIGONOMETRY( <factor> ) 

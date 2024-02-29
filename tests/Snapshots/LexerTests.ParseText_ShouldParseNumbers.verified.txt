@@ -6,5 +6,9 @@
   {
     type: FLOAT,
     value: 3.4
+  },
+  {
+    type: EOF,
+    value: EOF
   }
 ]

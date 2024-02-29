@@ -1,60 +1,75 @@
 ﻿[
   {
-    type: RPAREN
+    type: RPAREN,
+    value: )
   },
   {
-    type: MUL
+    type: MUL,
+    value: *
   },
   {
     type: VAR,
     value: "x"
   },
   {
-    type: RPAREN
+    type: RPAREN,
+    value: )
   },
   {
-    type: MUL
+    type: MUL,
+    value: *
   },
   {
-    type: SIN
+    type: SIN,
+    value: sin
   },
   {
-    type: RPAREN
+    type: RPAREN,
+    value: )
   },
   {
-    type: MUL
+    type: MUL,
+    value: *
   },
   {
-    type: LN
+    type: LN,
+    value: ln
   },
   {
-    type: RPAREN
+    type: RPAREN,
+    value: )
   },
   {
-    type: MUL
+    type: MUL,
+    value: *
   },
   {
     type: CONST,
     value: 3.141592653589793
   },
   {
-    type: RPAREN
+    type: RPAREN,
+    value: )
   },
   {
-    type: MUL
+    type: MUL,
+    value: *
   },
   {
-    type: LPAREN
+    type: LPAREN,
+    value: (
   },
   {
-    type: RPAREN
+    type: RPAREN,
+    value: )
   },
   {
     type: INT,
     value: 3
   },
   {
-    type: MUL
+    type: MUL,
+    value: *
   },
   {
     type: CONST,
@@ -65,16 +80,23 @@
     value: 3.5
   },
   {
-    type: MUL
+    type: MUL,
+    value: *
   },
   {
     type: VAR,
     value: "y"
   },
   {
-    type: MUL
+    type: MUL,
+    value: *
   },
   {
-    type: LPAREN
+    type: LPAREN,
+    value: (
+  },
+  {
+    type: EOF,
+    value: EOF
   }
 ]

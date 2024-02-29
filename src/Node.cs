@@ -1,128 +1,80 @@
+using System.Diagnostics;
 
 namespace Derivate;
-
 public interface NodeVisitor<T>
 {
     T visitLiteral(Literal literal);
-    T visitGrouping(Grouping grouping);
     T visitUnary(Unary unary);
     T visitBinary(Binary binary);
 }
-public abstract class Node
-{
-    public abstract T accept<T>(NodeVisitor<T> visitor);
-    public abstract TokenType getType();
-    public static bool checkType(Node node, params TokenType[] types)
-    {
-        foreach (var type in types)
-        {
-            if (node.getType() == type) return true;
-        }
-        
-        return false;
-    }
-}
 
+public abstract class Node { 
+    public abstract Token token { get; set; } 
+    public abstract T accept<T>(NodeVisitor<T> visitor);
+    public static Literal f(Token token) => new Literal(token);
+    public static Literal f(int value) => new Literal(value);
+    public static Literal f(double value) => new Literal(value);
+    public static Literal f(char value) => new Literal(value);
+    public static Unary f(Token token, Node right) => new Unary(token, right);
+    public static Binary f(Node left, Token token, Node right) => new Binary(left, token, right);
+}
 public sealed class Literal : Node
 {
-    public object value { get; set; }
-    public TokenType type { get; set; }
+    public override Token token { get; set; }
     public Literal(Token token)
     {
-        value = token.value;
-        type = token.type;
+        Debug.Assert( token.type.match(TokenType.INT, TokenType.FLOAT, TokenType.CONST, TokenType.VAR) );
+        this.token = token;
     }
     public Literal(int value)
     {
-        this.value = value;
-        type = TokenType.INT;
+        token = Token.INT(value);
     }
     public Literal(double value)
     {
-        this.value = value;
-        if (value == Math.E || value == Math.PI)
+        token = value switch
         {
-            type = TokenType.CONST;
-        }
-        else
-        {
-            type = TokenType.FLOAT;
-        }
+            Math.PI or Math.E => Token.CONST(value),
+            _ => Token.FLOAT(value),
+        };
+    }
+    public Literal(char value)
+    {
+        token = Token.VAR(value);
     }
 
     public override T accept<T>(NodeVisitor<T> visitor)
     {
         return visitor.visitLiteral(this);
     }
-
-    public override TokenType getType()
-    {
-        return type;
-    }
-
-    public double getValue() 
-    {
-        return double.Parse(
-            this.value.ToString() 
-            ?? throw new ArgumentException(nameof(value), "value is not a number")
-        );
-    }
-}
-
-public sealed class Grouping : Node
-{
-
-    public Node expr { get; set; }
-    public Grouping(Node expr)
-    {
-        this.expr = expr;
-    }
-    
-    public override T accept<T>(NodeVisitor<T> visitor)
-    {
-        return visitor.visitGrouping(this);
-    }
-
-    public override TokenType getType()
-    {
-        return expr.getType();
-    }
 }
 public sealed class Unary : Node
 {
     public Node right { get; set; }
-    public Token operation { get; set; }
-    public Unary(Token operation, Node right)
+    public override Token token { get; set; }
+    public Unary(Token token, Node right)
     {
-        this.operation = operation;
+        this.token = token;
         this.right = right;
     }
     public override T accept<T>(NodeVisitor<T> visitor)
     {
         return visitor.visitUnary(this);
     }
-    public override TokenType getType()
-    {
-        return operation.type;
-    }
 }
 public sealed class Binary : Node
 {
     public Node left { get; set; }
     public Node right { get; set; }
-    public Token operation { get; set; }
-    public Binary(Node left, Token operation, Node right)
+    public override Token token { get; set; }
+    public Binary(Node left, Token token, Node right)
     {
-        this.operation = operation;
+        this.token = token;
         this.left = left;
         this.right = right;
     }
     public override T accept<T>(NodeVisitor<T> visitor)
     {
         return visitor.visitBinary(this);
-    }
-    public override TokenType getType()
-    {
-        return operation.type;
     }
 }

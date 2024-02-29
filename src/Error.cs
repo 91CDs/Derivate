@@ -1,23 +1,24 @@
 namespace Derivate;
 
-public class ParseError : Exception 
+public class ParserError : Exception 
 {
-    public ParseError(string? message) : base(message) {}
-    public override string StackTrace
-    {
-        get { return string.Empty; }
-    }
+    public ParserError(string message) : base(message) {}
+    public override string StackTrace { get { return string.Empty; } }
 }
+public class LexerError : Exception 
+{
+    public LexerError(string message) : base(message) {}
+    public override string StackTrace { get { return string.Empty; } }
+}
+
 public static partial class Derivate
 {
     public static void LexerError(string message, int position)
     {
-        Console.WriteLine($"Error: {message} in position {position}. \n");
-        Environment.Exit(0);
+        throw new LexerError($"{message} in position {position}.");
     }
-    public static ParseError ParserError(string message, int position)
+    public static ParserError ParserError(string message, int position)
     {
-        Console.WriteLine($"Error: {message} in position {position}. \n");
-        return new ParseError(string.Empty);
+        return new ParserError($"{message} in position {position}.");
     }
 }

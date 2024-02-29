@@ -5,6 +5,7 @@ public static class Lexer
     {
         var tokens = new List<Token>();
         int pos = 0;
+        
         while (pos < input.Length)
         {
             char c = input[pos];
@@ -35,7 +36,7 @@ public static class Lexer
                         tokens.Add(Token.MUL);
                     }
                     if (token.type is TokenType.ILLEGAL) {
-                        throwLexerError(identifier, input.Substring(pos, input.Length - pos), pos);
+                        Derivate.LexerError($"Invalid Character ({identifier}) [{input.Substring(pos, input.Length - pos)}]", pos);
                     }
 
                     tokens.Add(token);
@@ -56,7 +57,7 @@ public static class Lexer
                 };
 
                 if (token.type is TokenType.ILLEGAL) {
-                    throwLexerError(c.ToString(), input.Substring(pos, input.Length - pos), pos);
+                    Derivate.LexerError($"Invalid Character ({c}) [{input.Substring(pos, input.Length - pos)}]", pos);
                 }
                 if (tokens.Count > 0 && hasImplicitMult(tokens.Last(), token)) {
                     tokens.Add(Token.MUL);
@@ -66,6 +67,8 @@ public static class Lexer
                 pos++;
             }
         }
+        tokens.Add(Token.EOF);
+        
         return tokens;
     }
 
@@ -82,7 +85,7 @@ public static class Lexer
         }
 
         string number = input.Substring(startPos, pos - startPos);
-        if (periods == 1) return Token.FLOAT(float.Parse(number));
+        if (periods == 1) return Token.FLOAT(double.Parse(number));
         return Token.INT(int.Parse(number));
     }
 
@@ -124,8 +127,4 @@ public static class Lexer
     }
 
     static bool isVariable(char input) => "xyzabc".ToList().Contains(input);
-
-    static void throwLexerError(string identifier, string unparsed, int pos) {
-        Derivate.LexerError($"Invalid Character: {identifier} [{unparsed}]", pos);
-    }
 }
