@@ -61,10 +61,10 @@ public sealed class ASTPrint : NodeVisitor<string>
     }
     public string visitLiteral(Literal node)
     {
-        if (node.token.type is TokenType.CONST)
-            return Token.MathConstants((double) node.token.value);
+        if (node.type is TokenType.CONST)
+            return Token.MathConstants((double) node.value);
             
-        return node.token.value.ToString()!;
+        return node.value.ToString()!;
     }
 }
 public sealed class FunctionPrint : NodeVisitor<string>
@@ -84,11 +84,15 @@ public sealed class FunctionPrint : NodeVisitor<string>
     }
     public string visitBinary(Binary node)
     {
-        bool isVar = node.right.token.type == TokenType.VAR;
-        bool isVarExp = node.right.token.type == TokenType.EXP && hasVariable(node.right);
-        if (node.token.type == TokenType.MUL && (isVar || isVarExp))
+        bool isVar = node.right.type == TokenType.VAR;
+        bool isVarExp = node.right.type == TokenType.EXP && hasVariable(node.right);
+        if (node.type is TokenType.MUL && (isVar || isVarExp))
         {
-            return $" {print(node.left)}{print(node.right)} ";
+            return $"{print(node.left)}{print(node.right)}";
+        }
+        else if (node.type.match(TokenType.MUL, TokenType.DIV, TokenType.EXP))
+        {
+            return $"{print(node.left)}{node.token.value}{print(node.right)}";
         }
 
         return $"{print(node.left)} {node.token.value} {print(node.right)}";
@@ -99,6 +103,6 @@ public sealed class FunctionPrint : NodeVisitor<string>
     }
     public string visitLiteral(Literal node)
     {
-        return node.token.value.ToString()!;
+        return node.value.ToString()!;
     }
 }

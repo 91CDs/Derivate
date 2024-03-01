@@ -1,106 +1,93 @@
+using System.Diagnostics;
 using static Derivate.TokenType;
 namespace Derivate;
 
 public class Derivative : NodeVisitor<Node>
 {   
-    bool checkType(Node n, params TokenType[] types)
-    {
-        foreach (var type in types)
-        {
-            if (n.getType() == type)
-                return true;
-        }
-
-        return false;
-    }
-
     private Node SumDx(Node l, Node r)
     {
-        return new Binary(dx(l), new Token(ADD), dx(r));
+        return Node.f(dx(l), Token.ADD, dx(r));
     }
 
     private Node DifferenceDx(Node l, Node r)
     {
-        return new Binary(dx(l), new Token(SUB), dx(r));
+        return Node.f(dx(l), Token.SUB, dx(r));
     }
 
-    public Node ProductDx(Node l, Node r)
+    private Node ProductDx(Node l, Node r)
     {
-        if (checkType(l, INT, FLOAT, CONST))
+        if (l is Literal(INT or FLOAT or CONST, _))
         {
-            return new Binary(l, new Token(MUL), dx(r));
+            return Node.f(l, Token.MUL, dx(r));
         }
 
-        return new Binary(
-            new Binary(l, new Token(MUL), dx(r)),
-            new Token(ADD),
-            new Binary(r, new Token(MUL), dx(l))
+        return Node.f(
+            Node.f(l, Token.MUL, dx(r)),
+            Token.ADD,
+            Node.f(r, Token.MUL, dx(l))
         );
     }
 
-    public Node QuotientDx(Node l, Node r)
+    private Node QuotientDx(Node l, Node r)
     {
-        return new Binary(
-            new Binary(
-                new Binary(r, new Token(MUL), dx(l)),
-                new Token(SUB),
-                new Binary(l, new Token(MUL), dx(r))
+        return Node.f(
+            Node.f(
+                Node.f(r, Token.MUL, dx(l)),
+                Token.SUB,
+                Node.f(l, Token.MUL, dx(r))
             ),
-            new Token(DIV),
-            new Binary(l, new Token(EXP), new Literal(2))
+            Token.DIV,
+            Node.f(r, Token.EXP, Node.f(2))
         ); 
     }
 
-    public Node PowerDx(Node l, Node r)
+    private Node PowerDx(Node l, Node r)
     {
-        if (checkType(r, INT))
+        if (r is Literal(INT or FLOAT, _) integer)
         {
-            var n = (int)((Literal)r).value;
+            var n = (int)integer.value;
 
-            return new Binary(dx(l), new Token(MUL),
-                new Binary(
-                    new Literal(n),
-                    new Token(MUL),
-                    new Binary(
+            return Node.f(dx(l), Token.MUL,
+                Node.f(
+                    Node.f(n),
+                    Token.MUL,
+                    Node.f(
                         l,
-                        new Token(EXP),
-                        new Literal(n - 1)
+                        Token.EXP,
+                        Node.f(n - 1)
                     )
                 )
             );
         }
 
-        if (checkType(l, CONST))
+        if (l is Literal(CONST, var num) && num is Math.E)
         {
-            var n = (double)((Literal)l).value;
-            
-            if (n == Math.E)
-                return new Binary( 
-                    dx(r),
-                    new Token(MUL),
-                    new Binary(l, new Token(EXP), r)
-                );
+            return Node.f( 
+                dx(r),
+                Token.MUL,
+                Node.f(l, Token.EXP, r)
+            );
         }
 
-        var log = new Binary(l, 
-            new Token(MUL),
-            new Unary(new Token(LN), r)
+        var log = Node.f(l, 
+            Token.MUL,
+            Node.f(Token.LN, r)
         );
 
-        return new Binary(
-            new Binary(
-                new Literal(Math.E),
-                new Token(EXP),
+        return Node.f(
+            Node.f(
+                Node.f(Math.E),
+                Token.EXP,
                 log
             ),
-            new Token(MUL),
+            Token.MUL,
             dx(log)
         );
     }
 
     public Node dx(Node expr)
     {
-        return expr.accept<Node>(this);
+        return expr.accept(this);
     }
 
     public Node visitBinary(Binary binary)
@@ -108,7 +95,7 @@ public class Derivative : NodeVisitor<Node>
         var l = binary.left;
         var r = binary.right;
 
-        return binary.operation.type switch
+        return binary.type switch
         {
             ADD => SumDx(l,r),
             SUB => DifferenceDx(l,r),
@@ -116,7 +103,7 @@ public class Derivative : NodeVisitor<Node>
             DIV => QuotientDx(l,r),
             EXP => PowerDx(l,r),
 
-            _ => throw new ArgumentException(),
+            _ => throw new UnreachableException(),
         };
     }
 
@@ -125,67 +112,65 @@ public class Derivative : NodeVisitor<Node>
     {
         var r = unary.right;
 
-        return unary.operation.type switch 
+        return unary.type switch 
         {
-            SIN => new Binary(dx(r), new Token(MUL), 
-                    new Unary(new Token(COS), r)
+            SIN => Node.f(dx(r), Token.MUL, Node.f(Token.COS, r)),
+            COS => Node.f(dx(r), 
+                    Token.MUL, 
+                    Node.f(Token.SUB, Node.f(Token.SIN, r))
                 ),
-            COS => new Binary(dx(r), 
-                    new Token(MUL), 
-                    new Unary(new Token(SUB), 
-                        new Unary(new Token(SIN), r)
+            TAN => Node.f(dx(r), 
+                    Token.MUL, 
+                    Node.f(Node.f(Token.SEC, r), 
+                        Token.EXP,
+                        Node.f(2)
                     )
                 ),
-            TAN => new Binary(dx(r), 
-                    new Token(MUL), 
-                    new Binary(new Unary(new Token(SEC), r), 
-                        new Token(EXP),
-                        new Literal(2)
-                    )
-                ),
-            CSC => new Binary(dx(r), 
-                    new Token(MUL),
-                    new Unary(new Token(SUB), 
-                        new Binary(new Unary(new Token(CSC), r),
-                            new Token(MUL),
-                            new Unary(new Token(COT), r)
+            CSC => Node.f(dx(r), 
+                    Token.MUL,
+                    Node.f(Token.SUB, 
+                        Node.f(Node.f(Token.CSC, r),
+                            Token.MUL,
+                            Node.f(Token.COT, r)
                         )
                     )
                 ),
-            SEC => new Binary(dx(r), 
-                    new Token(MUL),
-                    new Binary(new Unary(new Token(SEC), r),
-                        new Token(MUL),
-                        new Unary(new Token(TAN), r)
+            SEC => Node.f(dx(r), 
+                    Token.MUL,
+                    Node.f(Node.f(Token.SEC, r),
+                        Token.MUL,
+                        Node.f(Token.TAN, r)
                     )
                 ),
-            COT => new Binary(dx(r), 
-                    new Token(MUL), 
-                    new Binary(new Unary(new Token(CSC), r), 
-                        new Token(EXP),
-                        new Literal(2)
-                    )
-                ),
-            LOG => new Binary(dx(r), 
-                    new Token(MUL), 
-                    new Binary(new Literal(1), 
-                        new Token(DIV),
-                        new Binary(r,
-                            new Token(MUL),
-                            new Unary(new Token(LN), new Literal(10))
+            COT => Node.f(dx(r), 
+                    Token.MUL, 
+                    Node.f(Token.SUB, 
+                        Node.f(Node.f(Token.CSC, r), 
+                            Token.EXP,
+                            Node.f(2)
                         )
                     )
                 ),
-            LN =>  new Binary(dx(r), 
-                    new Token(MUL), 
-                    new Binary(new Literal(1), 
-                        new Token(DIV),
+            LOG => Node.f(dx(r), 
+                    Token.MUL, 
+                    Node.f(Node.f(1), 
+                        Token.DIV,
+                        Node.f(r,
+                            Token.MUL,
+                            Node.f(Token.LN, Node.f(10))
+                        )
+                    )
+                ),
+            LN =>  Node.f(dx(r), 
+                    Token.MUL, 
+                    Node.f(Node.f(1), 
+                        Token.DIV,
                         r
                     )
                 ),
-            SUB =>  new Unary(new Token(SUB), dx(r)),
+            SUB =>  Node.f(Token.SUB, dx(r)),
 
-            _ => throw new ArgumentException(),
+            _ => throw new UnreachableException(),
         };
     }
 
@@ -193,16 +178,11 @@ public class Derivative : NodeVisitor<Node>
     {
         return literal.type switch
         {
-            INT or FLOAT or CONST => new Literal(0),
-            VAR => new Literal(1),
+            INT or FLOAT or CONST => Node.f(0),
+            VAR => Node.f(1),
 
-            _ => throw new ArgumentException(),
+            _ => throw new UnreachableException(),
         };
-    }
-
-    public Node visitGrouping(Grouping grouping)
-    {   
-        return dx(grouping.expr);
     }
 }
 
