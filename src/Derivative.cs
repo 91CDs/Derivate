@@ -176,13 +176,12 @@ public class Derivative : NodeVisitor<Node>
 
     public Node visitLiteral(Literal literal)
     {
-        return literal.type switch
-        {
-            INT or FLOAT or CONST => Node.f(0),
-            VAR => Node.f(1),
+        return Node.f(0);
+    }
 
-            _ => throw new UnreachableException(),
-        };
+    public Node visitVariable(Variable variable)
+    {
+        return Node.f(1);
     }
 }
 

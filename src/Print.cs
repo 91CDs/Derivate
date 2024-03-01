@@ -66,6 +66,11 @@ public sealed class ASTPrint : NodeVisitor<string>
             
         return node.value.ToString()!;
     }
+
+    public string visitVariable(Variable node)
+    {
+        return node.value.ToString()!;
+    }
 }
 public sealed class FunctionPrint : NodeVisitor<string>
 {
@@ -102,6 +107,10 @@ public sealed class FunctionPrint : NodeVisitor<string>
         return $"{node.token.value}({print(node.right)})";
     }
     public string visitLiteral(Literal node)
+    {
+        return node.value.ToString()!;
+    }
+    public string visitVariable(Variable node)
     {
         return node.value.ToString()!;
     }

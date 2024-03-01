@@ -3,6 +3,7 @@ using System.Diagnostics;
 namespace Derivate;
 public interface NodeVisitor<T>
 {
+    T visitVariable(Variable variable);
     T visitLiteral(Literal literal);
     T visitUnary(Unary unary);
     T visitBinary(Binary binary);
@@ -14,18 +15,32 @@ public abstract class Node {
     public object value { get => token.value; }
     public abstract T accept<T>(NodeVisitor<T> visitor);
 
+    public static Variable f(char value) => new Variable(value);
     public static Literal f(double value) => new Literal(value);
-    public static Literal f(char value) => new Literal(value);
-    public static Literal f(Token token) => new Literal(token);
     public static Unary f(Token token, Node right) => new Unary(token, right);
     public static Binary f(Node left, Token token, Node right) => new Binary(left, token, right);
+}
+public sealed class Variable : Node
+{
+    public override Token token { get; set; }
+    public Variable(Token token)
+    {
+        Debug.Assert( token.type is TokenType.VAR );
+        this.token = token;
+    }
+    public Variable(char value): this(Token.VAR(value)) {}
+    public override T accept<T>(NodeVisitor<T> visitor)
+    {
+        return visitor.visitVariable(this);
+    }
+    public void Deconstruct(out TokenType type, out object value) => (type, value) = (this.type, this.value);
 }
 public sealed class Literal : Node
 {
     public override Token token { get; set; }
     public Literal(Token token) 
     {
-        Debug.Assert( token.type.match(TokenType.INT, TokenType.FLOAT, TokenType.CONST, TokenType.VAR) );
+        Debug.Assert( token.type.match(TokenType.INT, TokenType.FLOAT, TokenType.CONST) );
         this.token = token;
     }
     public Literal(double value)
@@ -37,8 +52,6 @@ public sealed class Literal : Node
             _ => Token.FLOAT(value),
         };
     }
-    public Literal(char value): this(Token.VAR(value)) {}
-
     public override T accept<T>(NodeVisitor<T> visitor)
     {
         return visitor.visitLiteral(this);

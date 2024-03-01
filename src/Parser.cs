@@ -119,8 +119,10 @@ public class Parser
 
     Node factor()
     {   
-        if (match(TokenType.INT, TokenType.FLOAT, TokenType.CONST, TokenType.VAR))
+        if (match(TokenType.INT, TokenType.FLOAT, TokenType.CONST))
             return new Literal(previous());
+        if (match(TokenType.VAR))
+            return new Variable(previous());
 
         if (match(TokenType.LPAREN))
         {
