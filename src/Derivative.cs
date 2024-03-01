@@ -16,7 +16,7 @@ public class Derivative : NodeVisitor<Node>
 
     private Node ProductDx(Node l, Node r)
     {
-        if (l is Literal(INT or FLOAT or CONST, _))
+        if (l is Literal)
         {
             return Node.f(l, Token.MUL, dx(r));
         }
