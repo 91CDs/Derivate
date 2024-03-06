@@ -1,8 +1,8 @@
 using System.Diagnostics;
+using System.Text;
 
 namespace Derivate;
 
-// TODO: Change token to use 1 record struct instead of enum & record structs (for easy member access & no type bs)
 public enum TokenType
 { 
     SUB, ADD, MUL, DIV, EXP,        // Algebraic 
@@ -46,10 +46,13 @@ public readonly record struct Token(TokenType type, object value)
 
     public override string ToString()
     {
-        return type switch {
-            TokenType.CONST => $"{type}:{MathConstants((double) value)}",
-            _ => $"{type}:{value}",
+        StringBuilder str = new StringBuilder($"{type}:");
+        var valueStr = type switch {
+            TokenType.CONST => MathConstants((double) value),
+            _ => value,
         };
+        str.Append(valueStr);
+        return str.ToString();
     }
 
     public static string MathConstants(double constant) 

@@ -8,7 +8,8 @@ public static class Print
     }
     public static string Repr(this List<Token> tokens)
     {
-        return $"[ {string.Join(" , ", tokens.Select(t => t.ToString())) } ]";
+        string tokensStr = string.Join(" , ", tokens.Select(t => t.ToString()));
+        return $"[ {tokensStr} ]";
     }
     
     public static void printTokens(this List<Token> tokens)
