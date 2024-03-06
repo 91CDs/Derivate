@@ -8,11 +8,10 @@ public static partial class Derivate
 
         var Parser = new Parser(token);
         Node expr = Parser.Parse();
-        expr.printAST();
+        expr.printAST(new Evaluator().eval(expr));
 
-        var derivativeEval = new Derivative();
-        Node derivative = derivativeEval.dx(expr);
-        derivative.printFunction();
+        Node derivative = new Derivative().dx(expr);
+        derivative.printFunction(new Evaluator().eval(derivative));
     }
     public static void Main(string[] args)
     {
