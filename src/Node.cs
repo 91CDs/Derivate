@@ -20,8 +20,14 @@ public abstract record Node {
     public static Unary f(Token token, Node right) => new Unary(token, right);
     public static Binary f(Node left, Token token, Node right) => new Binary(left, token, right);
 }
-public sealed record Variable(Token token) : Node
+public sealed record Variable : Node
 {
+    public override Token token { get; init; }
+    public Variable(Token token)
+    {
+        Debug.Assert( token.type is TokenType.VAR );
+        this.token = token;
+    }
     public Variable(char value): this(Token.VAR(value)) {}
     public override T accept<T>(NodeVisitor<T> visitor)
     {
@@ -29,8 +35,14 @@ public sealed record Variable(Token token) : Node
     }
     public void Deconstruct(out TokenType type, out object value) => (type, value) = (this.type, this.value);
 }
-public sealed record Literal(Token token) : Node
+public sealed record Literal: Node
 {
+    public override Token token { get; init; }
+    public Literal(Token token)
+    {
+        Debug.Assert( token.type.match(TokenType.INT, TokenType.FLOAT, TokenType.CONST) );
+        this.token = token;
+    }
     public new double value { get => Convert.ToDouble(token.value); }
     public Literal(double value): this(
         value switch

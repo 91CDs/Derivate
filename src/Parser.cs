@@ -76,12 +76,12 @@ public class Parser
 
     Node term()
     {
-        var l = exponent();
+        Node l = exponent();
 
         while (match(TokenType.MUL, TokenType.DIV))
         {
             Token op = previous();
-            var r = exponent();
+            Node r = exponent();
 
             l = new Binary(l, op, r);
         }
@@ -104,14 +104,12 @@ public class Parser
 
     Node unary()
     {
-        while (match(
+        if (match(
             TokenType.SIN, TokenType.COS, TokenType.TAN, TokenType.CSC, TokenType.SEC, 
             TokenType.COT, TokenType.LOG, TokenType.LN, TokenType.SUB
         ))
         {
-            Token op = previous();
-            var r = factor();
-            return new Unary(op, r);
+            return new Unary(previous(), factor());
         }
 
         return factor();
