@@ -12,7 +12,6 @@ public enum TokenType
     INT, FLOAT, CONST,
     VAR,
     ILLEGAL,
-    UNDEFINED, DNE,                 // for no answer (used in evaluation)
     EOF,
 }
 
@@ -24,7 +23,8 @@ public readonly record struct Token(TokenType type, object value)
     public static Token INT(int number) => new Token(TokenType.INT, number);
     public static Token FLOAT(double number) => new Token(TokenType.FLOAT, number);
     public static Token CONST(double constant) => new Token(TokenType.CONST, constant);
-    public static Token VAR(char variable) => new Token(TokenType.VAR, variable);
+    public static Token VAR(string variable) => new Token(TokenType.VAR, variable);
+    public static Token VAR(char variable) => new Token(TokenType.VAR, variable.ToString());
 
     public static readonly Token SUB = new Token(TokenType.SUB, "-");
     public static readonly Token ADD = new Token(TokenType.ADD, "+");
@@ -41,8 +41,6 @@ public readonly record struct Token(TokenType type, object value)
     public static readonly Token COT = new Token(TokenType.COT, "cot");
     public static readonly Token LPAREN = new Token(TokenType.LPAREN, "(");
     public static readonly Token RPAREN = new Token(TokenType.RPAREN, ")");
-    public static readonly Token UNDEFINED = new Token(TokenType.UNDEFINED, "UNDEFINED");
-    public static readonly Token DNE = new Token(TokenType.DNE, "DOES NOT EXIST");
 
     public override string ToString()
     {

@@ -120,7 +120,7 @@ public class Parser
         if (match(TokenType.INT, TokenType.FLOAT, TokenType.CONST))
             return new Literal(previous());
         if (match(TokenType.VAR))
-            return new Variable(previous());
+            return new Symbol(previous());
 
         if (match(TokenType.LPAREN))
         {
