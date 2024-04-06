@@ -63,3 +63,11 @@ public readonly record struct Token(TokenType type, object value)
         };
     }
 }
+
+public static class TokenExtensions
+{
+    public static bool match(this TokenType type, params TokenType[] types)
+    {
+        return new List<TokenType>(types).Contains(type);
+    }
+}
