@@ -13,6 +13,6 @@ public class ParserTests
         var parser = new Parser(Lexer.ParseText(input));
         var ast = parser.Parse();
 
-        Assert.Equal(new ASTPrint().print(ast), expected);
+        Assert.Equal(ast.Format(), expected);
     }
 }

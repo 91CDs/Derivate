@@ -9,7 +9,7 @@
   },
   {
     type: VAR,
-    value: "x"
+    value: x
   },
   {
     type: RPAREN,
@@ -85,7 +85,7 @@
   },
   {
     type: VAR,
-    value: "y"
+    value: y
   },
   {
     type: MUL,
