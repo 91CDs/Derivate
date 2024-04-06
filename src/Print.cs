@@ -1,118 +1,121 @@
+using System.Text;
+using static Derivate.TokenType;
 namespace Derivate;
-
-public static class Print
-{
-    public static bool match(this TokenType type, params TokenType[] types)
-    {
-        return new List<TokenType>(types).Contains(type);
-    }
-    public static string Repr(this List<Token> tokens)
-    {
-        string tokensStr = string.Join(" , ", tokens.Select(t => t.ToString()));
-        return $"[ {tokensStr} ]";
-    }
-    
+public static class PrintExtensions
+{    
     public static void printTokens(this List<Token> tokens)
     {
         Console.WriteLine("\nTOKENIZER::");
         Console.WriteLine(":::::::::::");
-        Console.WriteLine(tokens.Repr());
+        Console.WriteLine(tokens.Format());
     }
-
-    public static void printAST(this Node AST, Node? simplifiedAST = null)
+    public static void printAST(this Node AST)
     {
         Console.WriteLine("\nAST::");
         Console.WriteLine(":::::");
-        Console.WriteLine(new ASTPrint().print(AST));
-        if (simplifiedAST != null)
-            Console.WriteLine(new ASTPrint().print(simplifiedAST));
+        Console.WriteLine(AST.Format());
     }
-
-    public static void printFunction(this Node Function, Node? simplifiedFunction = null)
+    public static void printFunction(this Expression Function)
     {
         Console.WriteLine("\nFUNCTION::");
         Console.WriteLine("::::::::::");
-        Console.WriteLine(new FunctionPrint().print(Function));
-        if (simplifiedFunction != null)
-            Console.WriteLine(new FunctionPrint().print(simplifiedFunction));
+        Console.WriteLine(Function.Format());
+        Console.WriteLine(Function.ConvertToString());
     }
 
-    // public static void PolynomialChecker(INode expr)
-    // {
-    //     string printed = new ASTPrint().print(expr);
-
-    //     bool isTerm = Term.TryParseTerm(expr, out Term term);
-    //     Console.WriteLine($"Is it a term? [{printed}] : {isTerm} => {term}");
-
-    //     bool isPolynomial = Polynomial.TryParsePolynomial(expr, out Polynomial polyn);
-    //     Console.WriteLine($"Is it a polynomial? [{printed}] : {isPolynomial} => {polyn}");
-    // }
-}
-
-public sealed class ASTPrint : NodeVisitor<string>
-{
-    public string print(Node expr) => expr.accept(this);
-    public string visitBinary(Binary node)
+    public static string ConvertToString(this Expression func)
     {
-        return $"({print(node.left)}){node.token.value}({print(node.right)})";
-    }
-    public string visitUnary(Unary node)
-    {
-        return $"{node.token.value}({print(node.right)})";
-    }
-    public string visitLiteral(Literal node)
-    {
-        if (node.type is TokenType.CONST)
-            return Token.MathConstants((double) node.value);
-            
-        return node.value.ToString()!;
-    }
-
-    public string visitVariable(Variable node)
-    {
-        return node.value.ToString()!;
-    }
-}
-public sealed class FunctionPrint : NodeVisitor<string>
-{
-    public string print(Node expr)
-    {
-        return expr.accept(this);
-    }
-    public bool hasVariable(Node node)
-    {
-        if (node is Binary binary)
+        return func switch
         {
-            return binary.left.token.type == TokenType.VAR;
-        }
+            Number n     => n.value.ToString(),
+            Fraction n   => $"({n.numerator}/{n.denominator})",
+            Symbols n    => n.identifier.ToString(),
+            Product n    => $"*[{string.Join(", ", n.value.Select(n => n.ConvertToString()))}]",
+            Sum n        => $"+[{string.Join(", ", n.value.Select(n => n.ConvertToString()))}]",
+            Power n      => $"({n.Base.ConvertToString()}^{n.Exponent.ConvertToString()})",
+            Sine n       => $"sin({n.value.ConvertToString()})",
+            Cosine n     => $"cos({n.value.ConvertToString()})",
+            Tangent n    => $"tan({n.value.ConvertToString()})",
+            Secant n     => $"sec({n.value.ConvertToString()})",
+            Cosecant n   => $"csc({n.value.ConvertToString()})",
+            Cotangent n  => $"cot({n.value.ConvertToString()})",
+            Log n        => $"log({n.value.ConvertToString()})",
+            NaturalLog n => $"ln({n.value.ConvertToString()})",
 
-        return false;
+            _ => throw new ArgumentOutOfRangeException(nameof(func)),
+        };
     }
-    public string visitBinary(Binary node)
+    
+    public static string Format(this List<Token> tokens)
     {
-        bool isVar = node.right.type == TokenType.VAR;
-        bool isVarExp = node.right.type == TokenType.EXP && hasVariable(node.right);
-        if (node.type is TokenType.MUL && (isVar || isVarExp))
+        string tokensStr = string.Join(" , ", tokens.Select(t => t.ToString()));
+        return $"[ {tokensStr} ]";
+    }
+    public static string Format(this Node node)
+    {
+        return node switch
         {
-            return $"{print(node.left)}{print(node.right)}";
-        }
-        else if (node.type.match(TokenType.MUL, TokenType.DIV, TokenType.EXP))
-        {
-            return $"{print(node.left)}{node.token.value}{print(node.right)}";
-        }
+            Binary n    => $"({n.left.Format()}){n.value}({n.right.Format()})",
+            Unary n     => $"{n.value}({n.right.Format()})",
+            Literal(CONST, _) n => Token.MathConstants(n.value),
+            Literal n   => n.value.ToString(),
+            Symbol n  => n.value.ToString()!,
 
-        return $"{print(node.left)} {node.token.value} {print(node.right)}";
+            _ => throw new ArgumentOutOfRangeException(nameof(node)),
+        };
     }
-    public string visitUnary(Unary node)
+    public static string Format(this Expression func) 
     {
-        return $"{node.token.value}({print(node.right)})";
+        return func switch 
+        {
+            Number n     => n.value.ToString(),
+            Fraction n   => $"({n.numerator} / {n.denominator})",
+            Symbols n    => n.identifier.ToString(),
+            Sum n        => string.Join(" + ", n.value.Select(n => n.Format())),
+            Product n    => FormatMultiply(n),
+            Power n      => $"{n.Base.Format()}^{n.Exponent.Format()}",
+            Sine n       => $"sin({n.value.Format()})",
+            Cosine n     => $"cos({n.value.Format()})",
+            Tangent n    => $"tan({n.value.Format()})",
+            Secant n     => $"sec({n.value.Format()})",
+            Cosecant n   => $"csc({n.value.Format()})",
+            Cotangent n  => $"cot({n.value.Format()})",
+            Log n        => $"log({n.value.Format()})",
+            NaturalLog n => $"ln({n.value.Format()})",
+
+            _ => throw new ArgumentOutOfRangeException(nameof(func)),
+        };  
     }
-    public string visitLiteral(Literal node)
+    public static string FormatMultiply(Product n)
     {
-        return node.value.ToString()!;
-    }
-    public string visitVariable(Variable node)
-    {
-        return node.value.ToString()!;
+        if (n.value.Count == 1)
+            return n.value.First().Format();
+
+        if (n.value.Count == 2)
+            return (n.value[0], n.value[1]) switch
+            {
+                (Number fx, Power(Variable,_) gx)
+                    => $"{fx.Format()}{gx.Format()}",
+                (Number fx, Variable gx)
+                    => $"{fx.Format()}{gx.Format()}",
+                (Number fx, Function gx)
+                    => $"{fx.Format()}{gx.Format()}",
+                (var fx, var gx)
+                    => $"{fx.Format()}({gx.Format()})",
+            };
+
+        StringBuilder str = new StringBuilder();
+        for (int i = 0; i < n.value.Count; i++)
+        {
+            string appendStr = (i, n.value[i]) switch
+            {
+                (_, Power(Variable,_) fx) => $"{fx.Format()}",
+                (_, Variable fx)          => $"{fx.Format()}",
+                (0, var fx)          => $"{fx.Format()}",
+                (_, var fx)          => $"({fx.Format()})",
+            };
+            str.Append(appendStr);
+        }
+        return str.ToString();
     }
 }
