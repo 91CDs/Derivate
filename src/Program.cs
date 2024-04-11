@@ -1,17 +1,22 @@
-﻿namespace Derivate;
+﻿using System.Diagnostics;
+
+namespace Derivate;
 public static partial class Derivate
 {
     public static void run(string input)
     {
         List<Token> token = Lexer.ParseText(input).ToList();
-        token.printTokens();
+        token.DebugPrint();
 
         var Parser = new Parser(token);
         Node expr = Parser.Parse();
-        expr.printAST(new Evaluator().eval(expr));
+        expr.DebugPrint();
 
-        Node derivative = new Derivative().dx(expr);
-        derivative.printFunction(new Evaluator().eval(derivative));
+        Expression fx = expr.ToFunction().simplify();
+        fx.DebugPrint();
+
+        Expression derivative = fx.dx();
+        derivative.DebugPrint();
     }
     public static void Main(string[] args)
     {

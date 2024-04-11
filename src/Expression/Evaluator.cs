@@ -294,7 +294,7 @@ public static class Evaluator
         };
     }
     
-    public static Expression simplify(Expression expr)
+    public static Expression simplify(this Expression expr)
     {
         return expr switch
         {

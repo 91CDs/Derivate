@@ -1,31 +1,32 @@
 using PrettyPrintTree;
 namespace Derivate;
 public static class PrintExtensions
-{    
-    public static void printTokens(this List<Token> tokens)
+{
+    public static void DebugPrint(this List<Token> tokens)
     {
         Console.WriteLine("\n:::::::::::::");
         Console.WriteLine("::TOKENIZER::");
         Console.WriteLine(":::::::::::::");
         Console.WriteLine(tokens.Format());
     }
-    public static void printAST(this Node AST)
+    public static void DebugPrint(this Node AST)
     {
         Console.WriteLine("\n:::::::");
         Console.WriteLine("::AST::");
         Console.WriteLine(":::::::");
         Console.WriteLine(AST.Format());
     }
-    public static void printFunction(this Expression Function)
+    public static void DebugPrint(this Expression Function)
     {
         Console.WriteLine("\n::::::::::::");
         Console.WriteLine("::FUNCTION::");
         Console.WriteLine("::::::::::::");
         Console.WriteLine(Function.Format());
         Console.WriteLine(Function.ConvertToString());
+        Function.printPrettyFunctionTree();
     }
 
-    public static void printFunctionTreePretty(this Expression func)
+    public static void printPrettyFunctionTree(this Expression func)
     {
         var tree = new PrettyPrintTree<Expression>(
             getChildren: (node) => node switch

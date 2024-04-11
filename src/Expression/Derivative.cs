@@ -1,7 +1,7 @@
 using System.Diagnostics;
 namespace Derivate;
 
-public class Derivative
+public static class Derivative
 {   
     private static Expression ProductDx(List<Expression> f)
     {
@@ -71,7 +71,7 @@ public class Derivative
         };
     }
 
-    public static Expression dx(Expression f)
+    public static Expression dx(this Expression f)
     {
         Expression d = f switch
         {
@@ -124,7 +124,7 @@ public class Derivative
             
             _ => throw new UnreachableException(nameof(f)),
         };
-        return Evaluator.simplify(d);
+        return d.simplify();
     }
 }
 
