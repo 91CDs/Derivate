@@ -13,7 +13,7 @@ public class FunctionTests
         var expr = Evaluator.simplify(ast.ToFunction());
         var constant = expr.Const();
 
-        Assert.Equal(constant.Format(), expected.Format());
+        Assert.Equal(constant.ConvertToString(), expected.ConvertToString());
     }
 
     [Theory]
@@ -24,7 +24,7 @@ public class FunctionTests
         var expr = Evaluator.simplify(ast.ToFunction());
         var term = expr.Term();
 
-        Assert.Equal(term.Format(), expected.Format());
+        Assert.Equal(term.ConvertToString(), expected.ConvertToString());
     }
 }
 public class ConstTestData : TheoryData<string, Expression>
@@ -42,8 +42,8 @@ public class TermTestData : TheoryData<string, Expression>
     public TermTestData()
     {
         Add("3", F.Undefined);
-        Add("x^2", F.Pow(F.Var("x"), F.Num(2)));
-        Add("3x", F.Var("x"));
+        Add("x^2", F.Mul(F.Pow(F.Var("x"), F.Num(2))));
+        Add("3x", F.Mul(F.Var("x")));
         Add("4xsin(x)", F.Mul(F.Sin(F.Var("x")), F.Var("x")));
     }
 }

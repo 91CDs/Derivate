@@ -12,7 +12,7 @@ public class SimplifyTests
         var ast = new Parser(Lexer.ParseText(input)).Parse();
         var expr = Evaluator.simplify(ast.ToFunction());
 
-        Assert.Equal(expr.Format(), expected.Format());
+        Assert.Equal(expr.ConvertToString(), expected.ConvertToString());
     }
 }
 
@@ -22,6 +22,8 @@ public class SimplifyTestData : TheoryData<string, Expression>
     {
         Add("(x^2)*(x^4)", // Product Rule
             Term(1, 6));
+        Add("5x^4 / x^2",  // Quotient Rule
+            Term(5, 2));
         Add("(5x)^2",      // Power of Product
             Term(25, 2));
         Add("(x^2)^5",     // Power of Power
@@ -59,6 +61,7 @@ public class SimplifyTestData : TheoryData<string, Expression>
 
         // Unary Transformations
         Add("-x", Term(-1, 1));
+
     }
 
     private static Expression Term(int lc, int exp, Expression? b = null)

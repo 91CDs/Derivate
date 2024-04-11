@@ -1,38 +1,71 @@
+using F = Derivate.Func;
 using Derivate;
 
 namespace DerivateTests;
 
 public class DerivativeTests
 {
-    // All rules uses the generalized chain rule formula 
-    // ex:: dx(u^n) = u' * nu^(n-1) for power rule
-
-    // Algebraic Functions
     [Theory]
-    [InlineData("20", "0")]                                     // Constant Rule
-    [InlineData("2x", "2*1")]                                   // Constant Multiple Rule
-    [InlineData("-x", "-(1)")]
-    [InlineData("x^2", "1*2x^1")]                               // Power Rule
-    [InlineData("x^2 + x^2", "1*2x^1 + 1*2x^1")]                // Sum Rule
-    [InlineData("x^2 - x^2", "1*2x^1 - 1*2x^1")]                // Difference Rule
-    [InlineData("x^2 * x^3", "x^2*1*3x^2 + x^3*1*2x^1")]        // Product Rule
-    [InlineData("x^2 / x^3", "x^3*1*2x^1 - x^2*1*3x^2/x^3^2")]  // Quotient Rule
-    [InlineData("5x^5 + 10x - 20", "5*1*5x^4 + 10*1 - 0")]      // -> polynomial
-    // Trigonometric Functions
-    [InlineData("sin(x)", "1*cos(x)")]
-    [InlineData("cos(x)", "1*-(sin(x))")]
-    [InlineData("tan(x)", "1*sec(x)^2")]
-    [InlineData("csc(x)", "1*-(csc(x)*cot(x))")]
-    [InlineData("sec(x)", "1*sec(x)*tan(x)")]
-    [InlineData("cot(x)", "1*-(csc(x)^2)")]
-    // Exponential & Logarithmic Functions
-    [InlineData("ln(x)", "1*1/x")]
-    [InlineData("log(x)", "1*1/x*ln(10)")]
-    public void Dx_ShouldFindDerivativeOfExpression(string input, string expected)
+    [ClassData(typeof(DerivativeTestData))]
+    public void Dx_ShouldFindDerivativeOfExpression(string input, Expression expected)
     {
-        var ast = new Parser(Lexer.ParseText(input)).Parse();
-        var dx = new Derivative().dx(ast);
+        Node ast = new Parser(Lexer.ParseText(input)).Parse();
+        Expression dx = Derivative.dx(Evaluator.simplify(ast.ToFunction()));
 
-        Assert.Equal(new FunctionPrint().print(dx), expected);
+        Assert.Equal(dx.ConvertToString(), Evaluator.simplify(expected).ConvertToString());
     }
+}
+
+public class DerivativeTestData : TheoryData<string, Expression>
+{
+    public DerivativeTestData()
+    {
+        var XSquared       = F.Pow(varX, F.Num(2));
+        var XCubedPlus1    = F.Add(F.Pow(varX, F.Num(3)), F.Num(1));
+        var dx_XSquared    = F.Mul(F.Num(2), varX);
+        var dx_XCubedPlus1 = F.Mul(F.Num(3), F.Pow(varX, F.Num(2)));
+        
+        // All rules uses the generalized chain rule formula 
+        // ex:: dx(u^n) = u' * nu^(n-1) for power rule
+        Add( "20", F.Num(0) );      // Constant Rule
+        Add( "2x", F.Num(2) );      // Constant Multiple Rule
+        Add( "-x", F.Num(-1) );     // <-
+        Add( "x^2", dx_XSquared );  // Power Rule
+        Add( "x^3 + 1", dx_XCubedPlus1 );    // <-
+        Add( "x^2 + x^2",           // Sum Rule
+            F.Add(dx_XSquared, dx_XSquared));
+        Add( "x^2 - x^2",           // Difference Rule
+            F.Add(dx_XSquared, F.Sub(dx_XSquared))); 
+        Add( "x^2 * (x^3 + 1)",           // Product Rule
+            F.Add(
+                F.Mul(XSquared, dx_XCubedPlus1), 
+                F.Mul(XCubedPlus1, dx_XSquared)));
+        Add( "x^2 / (x^3 + 1)",           // Quotient Rule 
+            F.Mul(
+                F.Add(
+                    F.Mul(XCubedPlus1, dx_XSquared), 
+                    F.Sub(F.Mul(XSquared, dx_XCubedPlus1))), 
+                F.Div(F.Pow(XCubedPlus1, F.Num(2)))));
+        Add( "5x^5 + 10x - 20",     // Polynomial
+            F.Add(
+                F.Num(10),
+                F.Mul(
+                    F.Num(25), 
+                    F.Pow(varX, F.Num(4)))));
+        Add("e^x", F.Pow(F.E, varX));
+
+        // Trigonometric Functions
+        Add( "sin(x)", F.Cos(varX));
+        Add( "cos(x)", F.Sub(F.Sin(varX)));
+        Add( "tan(x)", F.Pow(F.Sec(varX), F.Num(2)));
+        Add( "csc(x)", F.Sub(F.Mul(F.Cot(varX), F.Csc(varX))));
+        Add( "sec(x)", F.Mul(F.Sec(varX), F.Tan(varX)));
+        Add( "cot(x)", F.Sub(F.Pow(F.Csc(varX), F.Num(2))));
+
+        // Exponential & Logarithmic Functions
+        Add( "ln(x)" , F.Pow(varX, F.Num(-1)));
+        Add( "log(x)", F.Div(F.Mul(F.Ln(F.Num(10)), varX)));
+    }
+
+    private static Expression varX => F.Var("x");
 }
