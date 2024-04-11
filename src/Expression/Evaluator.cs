@@ -67,18 +67,18 @@ namespace Derivate;
 
 public static class Evaluator
 {
-    private static Expression simplifyFraction(int numerator, int denominator)
+    private static Expression simplifyFraction(Fraction f)
     {
-        if (numerator % denominator == 0)
-            return Func.Num(numerator / denominator);
+        if (f.numerator % f.denominator == 0)
+            return Func.Num(f.numerator / f.denominator);
 
-        int gcd = MathInt.GCD(numerator, denominator);
-        return denominator switch
+        int gcd = MathInt.GCD(f.numerator, f.denominator);
+        return f.denominator switch
         {
-            > 0 => Func.Frac(numerator / gcd, denominator / gcd),
+            > 0 => Func.Frac(f.numerator / gcd, f.denominator / gcd),
             // No negative denominator to avoid confusion
-            < 0 => Func.Frac(-numerator / gcd, -denominator / gcd),
-            0 => throw new UnreachableException($"{nameof(denominator)} cannot be 0"),
+            < 0 => Func.Frac(-f.numerator / gcd, -f.denominator / gcd),
+            0 => throw new UnreachableException($"{nameof(f.denominator)} cannot be 0"),
         };
     }
     private static Expression simplifySum(List<Expression> function)
@@ -95,10 +95,10 @@ public static class Evaluator
         if (function.Count == 2)
             return (function[0], function[1]) switch
             {
-                (Number l, Number r) => l + r,
-                (Fraction l, Fraction r) => l + r,
-                (Number l, Fraction r) => l + r,
-                (Fraction l, Number r) => l + r, 
+                (Number l, Number r)     => l + r,
+                (Fraction l, Fraction r) => simplifyFraction(l + r),
+                (Number l, Fraction r)   => simplifyFraction(l + r),
+                (Fraction l, Number r)   => simplifyFraction(l + r), 
 
                 // Identity Property
                 (Number(0), var r) => r,
@@ -171,10 +171,10 @@ public static class Evaluator
         if (function.Count == 2)
             return (function[0], function[1]) switch
             {
-                (Number l, Number r) => l * r,
-                (Fraction l, Fraction r) => l * r,
-                (Number l, Fraction r) => l * r,
-                (Fraction l, Number r) => l * r, 
+                (Number l, Number r)     => l * r,
+                (Fraction l, Fraction r) => simplifyFraction(l * r),
+                (Number l, Fraction r)   => simplifyFraction(l * r),
+                (Fraction l, Number r)   => simplifyFraction(l * r), 
 
                 // Identity Property
                 (Number(1), var r) => r,
@@ -182,8 +182,8 @@ public static class Evaluator
                 
                 // Product merging
                 (Product l, Product r) => mergeProduct(l.value, r.value),
-                (Product l, var r) => mergeProduct(l.value, [r]),
-                (var l, Product r) => mergeProduct([l], r.value),
+                (Product l, var r)     => mergeProduct(l.value, [r]),
+                (var l, Product r)     => mergeProduct([l], r.value),
 
                 // Product Rule: u^m * u^n = u^m+n (Like term merging)
                 (var fx, var gx)
@@ -231,7 +231,9 @@ public static class Evaluator
     }
     private static Expression simplifyPow(Expression left, Expression right)
     {
-        return (simplify(left), simplify(right)) switch
+        left = simplify(left);
+        right = simplify(right);
+        return (left, right) switch // (simplify(left), simplify(right)) breaks for some reason
         {
             // Undefined
             (_, Undefined) or (Undefined, _)
@@ -254,7 +256,7 @@ public static class Evaluator
     }
     private static Expression simplifyIntPow(Expression expr, Number exponent)
     {
-        return (simplify(expr), simplify(exponent)) switch
+        return (expr, exponent) switch
         {
             // Power of Power: (u^n)^m = u^m*n
             (Power l, _) 
@@ -266,8 +268,7 @@ public static class Evaluator
             // Power of Product: (uv)^a = u^a * v^a
             (Product l, _) 
                 => simplifyProduct(
-                    l.value.Select(x => simplifyIntPow(x, exponent))
-                    .ToList()),
+                    l.value.Select(x => simplifyIntPow(x, exponent)).ToList()),
             // Numerical base and exponent
             (Number l, Number r) 
                 => Number.Pow(l, r),
@@ -285,7 +286,8 @@ public static class Evaluator
     }
     private static Expression simplifyFunction(Function fx)
     {
-        return simplify(fx.value) switch
+        Expression gx = simplify(fx.value); 
+        return gx switch
         {
             Undefined => Func.Undefined,
             _ => fx,
@@ -298,7 +300,7 @@ public static class Evaluator
         {
             Number     n => n,
             Symbols    n => n,
-            Fraction   n => simplifyFraction(n.numerator, n.denominator),
+            Fraction   n => simplifyFraction(n),
             Product    n => simplifyProduct(n.value),
             Sum        n => simplifySum(n.value),
             Power      n => simplifyPow(n.Base, n.Exponent),

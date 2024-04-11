@@ -9,6 +9,7 @@ public interface Expression {
     /// <paramref name="gx"/> and false if not</returns>
     bool CompareTo(Expression gx);
 }
+
 // Constants
 /// <summary>Represents numerical expressions</summary>
 public interface Constant: Expression
@@ -23,7 +24,6 @@ public interface Constant: Expression
             _          => true,
         };
     }
-
 }
 public readonly record struct Number(int value): Constant
 {
@@ -47,7 +47,17 @@ public readonly record struct Number(int value): Constant
             throw new DivideByZeroException();
         return Func.Frac(a.value, b.value);
     }
-    public static Number Pow(Number a, Number b) => Func.Num((int) Math.Pow(a.value, b.value));
+    public static Expression Pow(Number a, Number b)
+    {
+        return (a.value, b.value) switch
+        {
+            (0, 0)   => Func.Undefined,
+            (_, >=0) => Func.Num((int)Math.Pow(a.value, b.value)),
+            (_, < 0) 
+                => Evaluator.simplify(
+                    Func.Frac(1, (int)Math.Pow(a.value, -b.value))),
+        };
+    }
 }
 public readonly record struct Fraction(int numerator, int denominator): Constant
 {
@@ -109,7 +119,11 @@ public interface Symbols: Expression
         };
     }
 }
-public readonly record struct Variable(string identifier): Symbols {}
+public readonly record struct Variable(string identifier): Symbols 
+{
+    public const string Pi = "pi";
+    public const string E = "e";
+}
 public readonly record struct Undefined: Symbols 
 {
     public Undefined() {}
@@ -118,12 +132,12 @@ public readonly record struct Undefined: Symbols
 public readonly record struct Pi: Symbols 
 {
     public Pi() {}
-    public string identifier { get; } = "Pi";
+    public string identifier { get; } = Variable.Pi;
 }
 public readonly record struct E: Symbols 
 {
     public E() {}
-    public string identifier { get; } = "E";
+    public string identifier { get; } = Variable.E;
 }
 
 // Operators
@@ -189,7 +203,8 @@ public readonly record struct Power(Expression Base, Expression Exponent) : Expr
 }
 
 // Functions
-/// <summary>Represents relations of a set of inputs to a unique output</summary>
+/// <summary>Represents relations of a 
+/// set of inputs to a unique output</summary>
 public interface Function : Expression
 {
     public Expression value { get; }
@@ -294,7 +309,12 @@ public static class Func
     public static readonly Undefined Undefined = new();
     public static readonly E E = new();
     public static readonly Pi Pi = new();
-    public static Variable Var(string identifier) => new(identifier);
+    public static Symbols Var(string identifier) => identifier switch
+    {
+        Variable.Pi => Pi,
+        Variable.E  => E,
+        _           => new Variable(identifier),
+    };
     public static Number Num(int value) => new(value);
     public static Fraction Frac(int numerator, int denominator) => new(numerator, denominator);
     public static Sum Add(params Expression[] value) => new(value.ToList());
