@@ -10,9 +10,9 @@ public class DerivativeTests
     public void Dx_ShouldFindDerivativeOfExpression(string input, Expression expected)
     {
         Node ast = new Parser(Lexer.ParseText(input)).Parse();
-        Expression dx = Derivative.dx(Evaluator.simplify(ast.ToFunction()));
+        Expression dx = Derivative.Dx(ast.ToFunction().Simplify());
 
-        Assert.Equal(dx.ConvertToString(), Evaluator.simplify(expected).ConvertToString());
+        Assert.Equal(dx.ConvertToString(), expected.Simplify().ConvertToString());
     }
 }
 
@@ -36,11 +36,11 @@ public class DerivativeTestData : TheoryData<string, Expression>
             F.Add(dx_XSquared, dx_XSquared));
         Add( "x^2 - x^2",           // Difference Rule
             F.Add(dx_XSquared, F.Sub(dx_XSquared))); 
-        Add( "x^2 * (x^3 + 1)",           // Product Rule
+        Add( "x^2 * (x^3 + 1)",     // Product Rule
             F.Add(
                 F.Mul(XSquared, dx_XCubedPlus1), 
                 F.Mul(XCubedPlus1, dx_XSquared)));
-        Add( "x^2 / (x^3 + 1)",           // Quotient Rule 
+        Add( "x^2 / (x^3 + 1)",     // Quotient Rule 
             F.Mul(
                 F.Add(
                     F.Mul(XCubedPlus1, dx_XSquared), 
@@ -53,6 +53,12 @@ public class DerivativeTestData : TheoryData<string, Expression>
                     F.Num(25), 
                     F.Pow(varX, F.Num(4)))));
         Add("e^x", F.Pow(F.E, varX));
+        Add("(x^3 + 1)^(x^2)", 
+            F.Mul(
+                F.Pow(XCubedPlus1, XSquared),
+                F.Add(
+                    F.Mul(XSquared, dx_XCubedPlus1, F.Div(XCubedPlus1)),
+                    F.Mul(dx_XSquared, F.Ln(XCubedPlus1)))));
 
         // Trigonometric Functions
         Add( "sin(x)", F.Cos(varX));

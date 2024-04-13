@@ -54,7 +54,7 @@ public readonly record struct Number(int value): Constant
             (0, 0)   => Func.Undefined,
             (_, >=0) => Func.Num((int)Math.Pow(a.value, b.value)),
             (_, < 0) 
-                => Evaluator.simplify(
+                => Evaluator.Simplify(
                     Func.Frac(1, (int)Math.Pow(a.value, -b.value))),
         };
     }
@@ -228,7 +228,7 @@ public readonly record struct Cotangent(Expression value, string name = "cot"): 
 public readonly record struct Log(Expression value, int Base, string name = "log"): Function {}
 public readonly record struct NaturalLog(Expression value, string name = "ln"): Function {}
 
-public static class Func
+public static partial class Func
 { 
     /// <summary>
     /// Returns the base of the given function or the Symbol Undefined

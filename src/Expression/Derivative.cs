@@ -3,17 +3,91 @@ namespace Derivate;
 
 public static class Derivative
 {   
+    public static Expression Dx(this Expression f)
+    {
+        // Given that f and g are functions and k ∈ R:
+        Expression d = f switch
+        {
+            // Undefined Transformation
+            Undefined 
+                => Func.Undefined,
+            // d/dx(k) = 0
+            Constant n
+                => Func.Num(0),
+            // d/dx(x) = 1   
+            Symbols n
+                => Func.Num(1),
+            // d/dx(f + g) = f' + g'
+            Sum n
+                => Func.Add(n.value.Select(Dx).ToList()),
+            // d/dx(f * g) = fg' + f'g
+            Product n
+                => ProductDx(n.value),
+            // d/dx(f^g) = f^g(gf'f^-1 + g'ln(f)) [GENERAL RULE]
+            Power n
+                => PowerDx(n.Base, n.Exponent),
+            // d/dx(sin(f)) = cos(f)f'
+            Sine n
+                => Func.Mul(
+                    Dx(n.value), 
+                    Func.Cos(n.value)),
+            // d/dx(cos(f)) = -sin(f)f'
+            Cosine n
+                => Func.Mul(
+                    Dx(n.value), 
+                    Func.Sub(Func.Sin(n.value))),
+            // d/dx(tan(f)) = (sec(f)^2)f'
+            Tangent n
+                => Func.Mul(
+                    Dx(n.value), 
+                    Func.Pow(Func.Sec(n.value), Func.Num(2))),
+            // d/dx(sec(f)) = sec(x)tan(x)f'
+            Secant n
+                => Func.Mul(
+                    Dx(n.value), 
+                    Func.Sec(n.value),
+                    Func.Tan(n.value)),
+            // d/dx(csc(f)) = -csc(f)cot(f)f'
+            Cosecant n
+                => Func.Mul(
+                    Dx(n.value), 
+                    Func.Sub(Func.Csc(n.value)), 
+                    Func.Cot(n.value)),
+            // d/dx(cot(f)) = -(csc(f)^2)f'
+            Cotangent n
+                => Func.Mul(
+                    Dx(n.value), 
+                    Func.Sub(Func.Pow(Func.Csc(n.value), Func.Num(2)))),
+            // d/dx(log(f)) = f' / (ln(10)f)
+            Log n
+                => Func.Mul(
+                    Dx(n.value),  
+                    Func.Div(Func.Mul(n.value, Func.Ln(Func.Num(10))))),
+            // d/dx(nat(f)) = f' / f
+            NaturalLog n
+                => Func.Mul(
+                    Dx(n.value),  
+                    Func.Div(n.value)),
+            
+            _ => throw new UnreachableException(nameof(f)),
+        };
+
+        return d.Simplify();
+    }
+
     private static Expression ProductDx(List<Expression> f)
     {
         return f switch
         {
             // Constant Product Rule
+            // d/dx(kf) = kf'
             [var l, var r] when l is Number or Fraction 
-                => Func.Mul(l, dx(r)),
+                => Func.Mul(l, Dx(r)),
             [var l, .. var r] when l is Number or Fraction 
-                => Func.Mul(l, dx(Func.Mul(r))),
+                => Func.Mul(l, Dx(Func.Mul(r))),
             
             // Quotient Rule
+            // d/dx(f / g) = (f'g - fg') / g^2
             [var l, Power(var rbase, Number(< 0) rexp)] 
                 => QuotientDx(l, Func.Pow(rbase, -rexp)),
             [.. var l, Power(var rbase, Number(< 0) rexp)] 
@@ -24,15 +98,16 @@ public static class Derivative
                 => QuotientDx(Func.Mul(r), Func.Pow(lbase, -lexp)),
             
             // Product Rule
+            // d/dx(f * g) = fg' + f'g
             [var l, var r]   
                 => Func.Add(
-                Func.Mul(l, dx(r)),
-                Func.Mul(r, dx(l))
+                Func.Mul(l, Dx(r)),
+                Func.Mul(r, Dx(l))
             ),
             [var l, .. var r]   
                 => Func.Add(
-                Func.Mul(l, dx(Func.Mul(r))),
-                Func.Mul(Func.Mul(r), dx(l))
+                Func.Mul(l, Dx(Func.Mul(r))),
+                Func.Mul(Func.Mul(r), Dx(l))
             ),
             
             _ => throw new UnreachableException($"{nameof(f)} cannot be empty"),
@@ -43,156 +118,34 @@ public static class Derivative
     {
         return Func.Mul(
             Func.Add(
-                Func.Mul(r, dx(l)),
-                Func.Sub(Func.Mul(l, dx(r)))
+                Func.Mul(r, Dx(l)),
+                Func.Sub(Func.Mul(l, Dx(r)))
             ),
             Func.Pow(r, Func.Num(-2))
         ); 
     }
 
-    private static Expression PowerDx(Expression l, Expression r)
+    private static Expression PowerDx(Expression f, Expression g)
     {
-        var log = Func.Mul(l, Func.Ln(r));
-
-        return (l, r) switch
+        return (f, g) switch
         {
+            // d/dx(x^n) = nx^n-1
             (_, Number or Fraction)
                 => Func.Mul(
-                    dx(l),
-                    r,
-                    Func.Pow(l, Func.Add(r, Func.Num(-1)))),
+                    Dx(f),
+                    g,
+                    Func.Pow(f, Func.Add(g, Func.Num(-1)))),
+            // d/dx(e^g) = (e^g)g'
             (E, _)
                 => Func.Mul(
-                    dx(r),
-                    Func.Pow(l, r)),
+                    Dx(g),
+                    Func.Pow(f, g)),
+            // d/dx(f^g) = f^g(gf'f^-1 + g'ln(f))
             _   => Func.Mul(
-                    Func.Pow(Func.E, log),
-                    dx(log))
+                    Func.Pow(f, g),
+                    Func.Add(
+                        Func.Mul(g, Dx(f), Func.Div(f)),
+                        Func.Mul(Dx(g), Func.Ln(f))))
         };
-    }
-
-    public static Expression dx(this Expression f)
-    {
-        Expression d = f switch
-        {
-            Constant n     
-                => Func.Num(0),
-            Undefined 
-                => Func.Undefined,
-            Symbols n        
-                => Func.Num(1),
-            Sum n        
-                => Func.Add(n.value.Select(dx).ToList()),
-            Product n   
-                => ProductDx(n.value),
-            Power n      
-                => PowerDx(n.Base, n.Exponent),
-            Sine n       
-                => Func.Mul(
-                    dx(n.value), 
-                    Func.Cos(n.value)),
-            Cosine n     
-                => Func.Mul(
-                    dx(n.value), 
-                    Func.Sub(Func.Sin(n.value))),
-            Tangent n    
-                => Func.Mul(
-                    dx(n.value), 
-                    Func.Pow(Func.Sec(n.value), Func.Num(2))),
-            Secant n     
-                => Func.Mul(
-                    dx(n.value), 
-                    Func.Sec(n.value),
-                    Func.Tan(n.value)),
-            Cosecant n   
-                => Func.Mul(
-                    dx(n.value), 
-                    Func.Sub(Func.Csc(n.value)), 
-                    Func.Cot(n.value)),
-            Cotangent n  
-                => Func.Mul(
-                    dx(n.value), 
-                    Func.Sub(Func.Pow(Func.Csc(n.value), Func.Num(2)))),
-            Log n        
-                => Func.Mul(
-                    dx(n.value),  
-                    Func.Div(Func.Mul(n.value, Func.Ln(Func.Num(10))))),
-            NaturalLog n 
-                => Func.Mul(
-                    dx(n.value),  
-                    Func.Div(n.value)),
-            
-            _ => throw new UnreachableException(nameof(f)),
-        };
-        return d.simplify();
     }
 }
-
-/* 
-|-----
-|                                                             
-|  INT, FLOAT, CONST                                            
-|  { d/dx(k) = 0 }                                            
-|                                                             
-|  VAR                                                        
-|  { d/dx(x) = 1 }                                            
-|                                                       
-|  Neg            => (SUB Expr)                               
-|  { d/dx(-f(x)) = -f'(x) }                                   
-|                                                             
-|  SIN            => (SIN Expr)                               
-|  { d/dx(sin(f(x))) = cos(f(x)) * f'(x) }                    
-|                                                             
-|  COS            => (COS Expr)                               
-|  { d/dx(cos(f(x))) = -sin(f(x)) * f'(x) }                   
-|                                                             
-|  TAN            => (TAN Expr)                               
-|  { d/dx(tan(f(x))) = sec(f(x))^2 * f'(x) }                  
-|                                                             
-|  CSC            => (CSC Expr)                               
-|  { d/dx(csc(f(x))) = -csc(f(x))cot(f(x)) * f'(x) }          
-|                                                             
-|  SEC            => (SEC Expr)                               
-|  { d/dx(sec(f(x))) = sec(f(x))tan(f(x)) * f'(x) }           
-|                                                             
-|  COT            => (COT Expr)                               
-|  { d/dx(cot(f(x))) = csc(f(x))^2 * f'(x) }                  
-|                                                             
-|  LN             => (LN  Expr)                               
-|  { d/dx(ln(f(x))) = 1/f(x) * f(x) }                         
-|                                                             
-|  LOG            => (LOG Expr)                               
-|  { d/dx(log(f(x))) = 1/f(x)ln(10) * f(x) }                  
-|-----                                                        
-|  Sum            => (Expr ADD  Expr)                         
-|  { d/dx(f(x) + g(x)) = f'(x) + g'(x) }                      
-|-----                                                        
-|  Difference     => (Expr SUB  Expr)                         
-|  { d/dx(f(x) - g(x)) = f'(x) - g'(x) }                      
-|-----                                                        
-|  Constant Mul   => (Num  MUL  Expr)                         
-|  { d/dx(k * f(x)) = k * f'(x) }                             
-|                                                             
-|  Product        => (Expr MUL  Expr)                         
-|  { d/dx(f(x) * g(x)) = f(x)g'(x) + g(x)f'(x) }              
-|-----                                                        
-|  Quotient       => (Expr DIV  Expr)                         
-|  { d/dx(f(x) / g(x)) = g(x)f'(x) - f(x)g'(x) / g(x)^2}      
-|-----                                                        
-|  Power          => (var  EXP  Num )                         
-|  { d/dx(x^n) = nx^(n-1)}                                    
-|                                                             
-|  General Power  => (Expr EXP  Num )                         
-|  { d/dx((f(x))^n) = n(f(x))^(n-1) * f'(x) }                 
-|                                                             
-|  Natural Exp    => (e    EXP  Expr)                         
-|  { d/dx(e^f(x)) = e^f(x) * f'(x)}                           
-|                                                             
-|  General Exp    => (Num  EXP  Expr)                         
-|  { d/dx(n^f(x)) = (n^f(x))ln(n) * f'(x)}                    
-|                                                             
-|  Power log      => (Expr EXP  Expr)                         
-|  { d/dx(f(x)^g(x)) = e^f(x)ln(g(x)) * d/dx(f(x)ln(g(x)))}   
-|                                                             
-|-----
- */

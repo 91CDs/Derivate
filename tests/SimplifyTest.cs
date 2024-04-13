@@ -10,7 +10,7 @@ public class SimplifyTests
     public void eval_PowerRule(string input, Expression expected)
     {
         var ast = new Parser(Lexer.ParseText(input)).Parse();
-        var expr = Evaluator.simplify(ast.ToFunction());
+        var expr = Evaluator.Simplify(ast.ToFunction());
 
         Assert.Equal(expr.ConvertToString(), expected.ConvertToString());
     }

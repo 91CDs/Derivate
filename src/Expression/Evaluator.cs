@@ -67,7 +67,7 @@ namespace Derivate;
 
 public static class Evaluator
 {
-    private static Expression simplifyFraction(Fraction f)
+    private static Expression SimplifyFraction(Fraction f)
     {
         if (f.numerator % f.denominator == 0)
             return Func.Num(f.numerator / f.denominator);
@@ -81,9 +81,9 @@ public static class Evaluator
             0 => throw new UnreachableException($"{nameof(f.denominator)} cannot be 0"),
         };
     }
-    private static Expression simplifySum(List<Expression> function)
+    private static Expression SimplifySum(List<Expression> function)
     {
-        function = function.Select(simplify).ToList();
+        function = function.Select(Simplify).ToList();
 
         // Undefined
         if (function.Contains(Func.Undefined))
@@ -96,24 +96,24 @@ public static class Evaluator
             return (function[0], function[1]) switch
             {
                 (Number l, Number r)     => l + r,
-                (Fraction l, Fraction r) => simplifyFraction(l + r),
-                (Number l, Fraction r)   => simplifyFraction(l + r),
-                (Fraction l, Number r)   => simplifyFraction(l + r), 
+                (Fraction l, Fraction r) => SimplifyFraction(l + r),
+                (Number l, Fraction r)   => SimplifyFraction(l + r),
+                (Fraction l, Number r)   => SimplifyFraction(l + r), 
 
                 // Identity Property
                 (Number(0), var r) => r,
                 (var l, Number(0)) => l,
 
                 // Sum merging
-                (Sum l, Sum r) => mergeSum(l.value, r.value),
-                (Sum l, var r) => mergeSum(l.value, [r]),
-                (var l, Sum r) => mergeSum([l], r.value),
+                (Sum l, Sum r) => MergeSum(l.value, r.value),
+                (Sum l, var r) => MergeSum(l.value, [r]),
+                (var l, Sum r) => MergeSum([l], r.value),
 
                 // c_1(x_1) + c_2(x_1) = (c_1 + c_2)(x_1) (Like Term merging)
                 (var fx, var gx)
                 when Func.Term(fx).Equals(Func.Term(gx))
-                    => simplifyProduct([
-                        simplifySum([Func.Const(fx), Func.Const(gx)]), 
+                    => SimplifyProduct([
+                        SimplifySum([Func.Const(fx), Func.Const(gx)]), 
                         Func.Term(fx)]),
                 
                 // Non Sum ordering
@@ -123,16 +123,16 @@ public static class Evaluator
                 _ => Func.Add(function)
             };
         
-        Expression rest = simplifySum(function.Skip(1).ToList());
+        Expression rest = SimplifySum(function.Skip(1).ToList());
         IEnumerable<Expression> restList = rest is Sum expr ? expr.value : [rest];
         return function.First() switch
         {
-            Sum p => mergeSum(restList, p.value),
-            var p => mergeSum(restList, [p]),
+            Sum p => MergeSum(restList, p.value),
+            var p => MergeSum(restList, [p]),
         };
     }
 
-    private static Sum mergeSum(IEnumerable<Expression> a, IEnumerable<Expression> b)
+    private static Sum MergeSum(IEnumerable<Expression> a, IEnumerable<Expression> b)
     {
         if (!a.Any())
             return Func.Add(b);
@@ -141,22 +141,22 @@ public static class Evaluator
             return Func.Add(a);
         
         Expression a1 = a.First(), b1 = b.First();
-        return simplifySum([a1, b1]) switch
+        return SimplifySum([a1, b1]) switch
         {
             Number(0) 
-                => mergeSum(a.Skip(1), b.Skip(1)),
+                => MergeSum(a.Skip(1), b.Skip(1)),
             Sum r when r == Func.Add(a1, b1)  
-                => Func.Add(mergeSum(a.Skip(1), b).value.Prepend(a1)),
+                => Func.Add(MergeSum(a.Skip(1), b).value.Prepend(a1)),
             Sum r when r == Func.Add(b1, a1) 
-                => Func.Add(mergeSum(a, b.Skip(1)).value.Prepend(b1)),
+                => Func.Add(MergeSum(a, b.Skip(1)).value.Prepend(b1)),
             var r
-                => Func.Add(mergeSum(a.Skip(1), b.Skip(1)).value.Prepend(r)),
+                => Func.Add(MergeSum(a.Skip(1), b.Skip(1)).value.Prepend(r)),
         };
     }
 
-    private static Expression simplifyProduct(List<Expression> function)
+    private static Expression SimplifyProduct(List<Expression> function)
     {
-        function = function.Select(simplify).ToList();
+        function = function.Select(Simplify).ToList();
 
         // Undefined
         if (function.Contains(Func.Undefined))
@@ -172,25 +172,25 @@ public static class Evaluator
             return (function[0], function[1]) switch
             {
                 (Number l, Number r)     => l * r,
-                (Fraction l, Fraction r) => simplifyFraction(l * r),
-                (Number l, Fraction r)   => simplifyFraction(l * r),
-                (Fraction l, Number r)   => simplifyFraction(l * r), 
+                (Fraction l, Fraction r) => SimplifyFraction(l * r),
+                (Number l, Fraction r)   => SimplifyFraction(l * r),
+                (Fraction l, Number r)   => SimplifyFraction(l * r), 
 
                 // Identity Property
                 (Number(1), var r) => r,
                 (var l, Number(1)) => l,
                 
                 // Product merging
-                (Product l, Product r) => mergeProduct(l.value, r.value),
-                (Product l, var r)     => mergeProduct(l.value, [r]),
-                (var l, Product r)     => mergeProduct([l], r.value),
+                (Product l, Product r) => MergeProduct(l.value, r.value),
+                (Product l, var r)     => MergeProduct(l.value, [r]),
+                (var l, Product r)     => MergeProduct([l], r.value),
 
                 // Product Rule: u^m * u^n = u^m+n (Like term merging)
                 (var fx, var gx)
                 when Func.Base(fx).Equals(Func.Base(gx))
-                    => simplifyPow(
+                    => SimplifyPow(
                         Func.Base(fx), 
-                        simplifySum([Func.Exponent(fx), Func.Exponent(gx)])),
+                        SimplifySum([Func.Exponent(fx), Func.Exponent(gx)])),
 
                 // Non product ordering
                 (var l, var r) when !l.CompareTo(r)
@@ -199,16 +199,16 @@ public static class Evaluator
                 _ => Func.Mul(function)
             };
 
-        Expression rest = simplifyProduct(function.Skip(1).ToList());
+        Expression rest = SimplifyProduct(function.Skip(1).ToList());
         IEnumerable<Expression> restList = rest is Product expr ? expr.value : [rest];
         return function.First() switch
         {
-            Product p => mergeProduct(restList, p.value),
-            var p => mergeProduct(restList, [p]),
+            Product p => MergeProduct(restList, p.value),
+            var p => MergeProduct(restList, [p]),
         };
     }
 
-    private static Product mergeProduct(IEnumerable<Expression> a, IEnumerable<Expression> b)
+    private static Product MergeProduct(IEnumerable<Expression> a, IEnumerable<Expression> b)
     {
         if (!a.Any())
             return Func.Mul(b);
@@ -217,22 +217,22 @@ public static class Evaluator
             return Func.Mul(a);
         
         Expression a1 = a.First(), b1 = b.First();
-        return simplifyProduct([a1, b1]) switch
+        return SimplifyProduct([a1, b1]) switch
         {
             Number(1) 
-                => mergeProduct(a.Skip(1), b.Skip(1)),
+                => MergeProduct(a.Skip(1), b.Skip(1)),
             Product r when r == Func.Mul(a1, b1)  
-                => Func.Mul(mergeProduct(a.Skip(1), b).value.Prepend(a1)),
+                => Func.Mul(MergeProduct(a.Skip(1), b).value.Prepend(a1)),
             Product r when r == Func.Mul(b1, a1) 
-                => Func.Mul(mergeProduct(a, b.Skip(1)).value.Prepend(b1)),
+                => Func.Mul(MergeProduct(a, b.Skip(1)).value.Prepend(b1)),
             var r
-                => Func.Mul(mergeProduct(a.Skip(1), b.Skip(1)).value.Prepend(r)),
+                => Func.Mul(MergeProduct(a.Skip(1), b.Skip(1)).value.Prepend(r)),
         };
     }
-    private static Expression simplifyPow(Expression left, Expression right)
+    private static Expression SimplifyPow(Expression left, Expression right)
     {
-        left = simplify(left);
-        right = simplify(right);
+        left = Simplify(left);
+        right = Simplify(right);
         return (left, right) switch // (simplify(left), simplify(right)) breaks for some reason
         {
             // Undefined
@@ -250,25 +250,25 @@ public static class Evaluator
             (Number(1), _)
                 => Func.Num(1),
             (_, Number r)
-                => simplifyIntPow(left, r),
+                => SimplifyIntPow(left, r),
             _ => Func.Pow(left, right)
         };
     }
-    private static Expression simplifyIntPow(Expression expr, Number exponent)
+    private static Expression SimplifyIntPow(Expression expr, Number exponent)
     {
         return (expr, exponent) switch
         {
             // Power of Power: (u^n)^m = u^m*n
             (Power l, _) 
-                => simplifyProduct([l.Exponent, exponent]) switch
+                => SimplifyProduct([l.Exponent, exponent]) switch
                 {
-                    Number pn => simplifyIntPow(l.Base, pn),
+                    Number pn => SimplifyIntPow(l.Base, pn),
                     var p     => Func.Pow(l.Base, p),
                 },
             // Power of Product: (uv)^a = u^a * v^a
             (Product l, _) 
-                => simplifyProduct(
-                    l.value.Select(x => simplifyIntPow(x, exponent)).ToList()),
+                => SimplifyProduct(
+                    l.value.Select(x => SimplifyIntPow(x, exponent)).ToList()),
             // Numerical base and exponent
             (Number l, Number r) 
                 => Number.Pow(l, r),
@@ -280,13 +280,13 @@ public static class Evaluator
                 => Func.Num(1), 
             // Identity Property
             (var l, Number(1))  
-                => simplify(l),
+                => Simplify(l),
             _ => Func.Pow(expr, exponent) 
         };
     }
-    private static Expression simplifyFunction(Function fx)
+    private static Expression SimplifyFunction(Function fx)
     {
-        Expression gx = simplify(fx.value); 
+        Expression gx = Simplify(fx.value); 
         return gx switch
         {
             Undefined => Func.Undefined,
@@ -294,17 +294,17 @@ public static class Evaluator
         };
     }
     
-    public static Expression simplify(this Expression expr)
+    public static Expression Simplify(this Expression expr)
     {
         return expr switch
         {
             Number     n => n,
             Symbols    n => n,
-            Fraction   n => simplifyFraction(n),
-            Product    n => simplifyProduct(n.value),
-            Sum        n => simplifySum(n.value),
-            Power      n => simplifyPow(n.Base, n.Exponent),
-            Function   n => simplifyFunction(n),
+            Fraction   n => SimplifyFraction(n),
+            Product    n => SimplifyProduct(n.value),
+            Sum        n => SimplifySum(n.value),
+            Power      n => SimplifyPow(n.Base, n.Exponent),
+            Function   n => SimplifyFunction(n),
 
             _ => throw new ArgumentOutOfRangeException(nameof(expr)),
         };

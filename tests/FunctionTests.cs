@@ -10,7 +10,7 @@ public class FunctionTests
     public void Const_getConstant(string input, Expression expected)
     {
         var ast = new Parser(Lexer.ParseText(input)).Parse();
-        var expr = Evaluator.simplify(ast.ToFunction());
+        var expr = Evaluator.Simplify(ast.ToFunction());
         var constant = expr.Const();
 
         Assert.Equal(constant.ConvertToString(), expected.ConvertToString());
@@ -21,7 +21,7 @@ public class FunctionTests
     public void Term_getTerm(string input, Expression expected)
     {
         var ast = new Parser(Lexer.ParseText(input)).Parse();
-        var expr = Evaluator.simplify(ast.ToFunction());
+        var expr = Evaluator.Simplify(ast.ToFunction());
         var term = expr.Term();
 
         Assert.Equal(term.ConvertToString(), expected.ConvertToString());

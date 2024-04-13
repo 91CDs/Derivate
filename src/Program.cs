@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-
-namespace Derivate;
+﻿namespace Derivate;
 public static partial class Derivate
 {
     public static void run(string input)
@@ -12,10 +10,10 @@ public static partial class Derivate
         Node expr = Parser.Parse();
         expr.DebugPrint();
 
-        Expression fx = expr.ToFunction().simplify();
+        Expression fx = expr.ToFunction().Simplify();
         fx.DebugPrint();
 
-        Expression derivative = fx.dx();
+        Expression derivative = fx.Dx();
         derivative.DebugPrint();
     }
     public static void Main(string[] args)
