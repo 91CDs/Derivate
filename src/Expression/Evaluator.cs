@@ -290,7 +290,7 @@ public static class Evaluator
         return gx switch
         {
             Undefined => Func.Undefined,
-            _ => fx,
+            _ => fx with { name = fx.name, value = gx }
         };
     }
     
