@@ -67,7 +67,7 @@ namespace Derivate;
 
 public static class Evaluator
 {
-    private static Expression SimplifyFraction(Fraction f)
+    private static IExpression SimplifyFraction(Fraction f)
     {
         if (f.numerator % f.denominator == 0)
             return Func.Num(f.numerator / f.denominator);
@@ -81,7 +81,7 @@ public static class Evaluator
             0 => throw new UnreachableException($"{nameof(f.denominator)} cannot be 0"),
         };
     }
-    private static Expression SimplifySum(List<Expression> function)
+    private static IExpression SimplifySum(List<IExpression> function)
     {
         function = function.Select(Simplify).ToList();
 
@@ -123,8 +123,8 @@ public static class Evaluator
                 _ => Func.Add(function)
             };
         
-        Expression rest = SimplifySum(function.Skip(1).ToList());
-        IEnumerable<Expression> restList = rest is Sum expr ? expr.value : [rest];
+        IExpression rest = SimplifySum(function.Skip(1).ToList());
+        IEnumerable<IExpression> restList = rest is Sum expr ? expr.value : [rest];
         return function.First() switch
         {
             Sum p => MergeSum(restList, p.value),
@@ -132,7 +132,7 @@ public static class Evaluator
         };
     }
 
-    private static Sum MergeSum(IEnumerable<Expression> a, IEnumerable<Expression> b)
+    private static Sum MergeSum(IEnumerable<IExpression> a, IEnumerable<IExpression> b)
     {
         if (!a.Any())
             return Func.Add(b);
@@ -140,7 +140,7 @@ public static class Evaluator
         if (!b.Any())
             return Func.Add(a);
         
-        Expression a1 = a.First(), b1 = b.First();
+        IExpression a1 = a.First(), b1 = b.First();
         return SimplifySum([a1, b1]) switch
         {
             Number(0) 
@@ -154,7 +154,7 @@ public static class Evaluator
         };
     }
 
-    private static Expression SimplifyProduct(List<Expression> function)
+    private static IExpression SimplifyProduct(List<IExpression> function)
     {
         function = function.Select(Simplify).ToList();
 
@@ -199,8 +199,8 @@ public static class Evaluator
                 _ => Func.Mul(function)
             };
 
-        Expression rest = SimplifyProduct(function.Skip(1).ToList());
-        IEnumerable<Expression> restList = rest is Product expr ? expr.value : [rest];
+        IExpression rest = SimplifyProduct(function.Skip(1).ToList());
+        IEnumerable<IExpression> restList = rest is Product expr ? expr.value : [rest];
         return function.First() switch
         {
             Product p => MergeProduct(restList, p.value),
@@ -208,7 +208,7 @@ public static class Evaluator
         };
     }
 
-    private static Product MergeProduct(IEnumerable<Expression> a, IEnumerable<Expression> b)
+    private static Product MergeProduct(IEnumerable<IExpression> a, IEnumerable<IExpression> b)
     {
         if (!a.Any())
             return Func.Mul(b);
@@ -216,7 +216,7 @@ public static class Evaluator
         if (!b.Any())
             return Func.Mul(a);
         
-        Expression a1 = a.First(), b1 = b.First();
+        IExpression a1 = a.First(), b1 = b.First();
         return SimplifyProduct([a1, b1]) switch
         {
             Number(1) 
@@ -229,7 +229,7 @@ public static class Evaluator
                 => Func.Mul(MergeProduct(a.Skip(1), b.Skip(1)).value.Prepend(r)),
         };
     }
-    private static Expression SimplifyPow(Expression left, Expression right)
+    private static IExpression SimplifyPow(IExpression left, IExpression right)
     {
         left = Simplify(left);
         right = Simplify(right);
@@ -254,7 +254,7 @@ public static class Evaluator
             _ => Func.Pow(left, right)
         };
     }
-    private static Expression SimplifyIntPow(Expression expr, Number exponent)
+    private static IExpression SimplifyIntPow(IExpression expr, Number exponent)
     {
         return (expr, exponent) switch
         {
@@ -284,9 +284,9 @@ public static class Evaluator
             _ => Func.Pow(expr, exponent) 
         };
     }
-    private static Expression SimplifyFunction(Function fx)
+    private static IExpression SimplifyFunction(Function fx)
     {
-        Expression gx = Simplify(fx.value); 
+        IExpression gx = Simplify(fx.value); 
         return gx switch
         {
             Undefined => Func.Undefined,
@@ -294,7 +294,7 @@ public static class Evaluator
         };
     }
     
-    public static Expression Simplify(this Expression expr)
+    public static IExpression Simplify(this IExpression expr)
     {
         return expr switch
         {

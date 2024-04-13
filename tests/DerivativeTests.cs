@@ -7,16 +7,16 @@ public class DerivativeTests
 {
     [Theory]
     [ClassData(typeof(DerivativeTestData))]
-    public void Dx_ShouldFindDerivativeOfExpression(string input, Expression expected)
+    public void Dx_ShouldFindDerivativeOfExpression(string input, IExpression expected)
     {
         Node ast = new Parser(Lexer.ParseText(input)).Parse();
-        Expression dx = Derivative.Dx(ast.ToFunction().Simplify());
+        IExpression dx = Derivative.Dx(ast.ToFunction().Simplify());
 
         Assert.Equal(dx.ConvertToString(), expected.Simplify().ConvertToString());
     }
 }
 
-public class DerivativeTestData : TheoryData<string, Expression>
+public class DerivativeTestData : TheoryData<string, IExpression>
 {
     public DerivativeTestData()
     {
@@ -73,5 +73,5 @@ public class DerivativeTestData : TheoryData<string, Expression>
         Add( "log(x)", F.Div(F.Mul(F.Ln(F.Num(10)), varX)));
     }
 
-    private static Expression varX => F.Var("x");
+    private static IExpression varX => F.Var("x");
 }

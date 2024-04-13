@@ -7,7 +7,7 @@ public class SimplifyTests
 {
     [Theory]
     [ClassData(typeof(SimplifyTestData))]
-    public void eval_PowerRule(string input, Expression expected)
+    public void eval_PowerRule(string input, IExpression expected)
     {
         var ast = new Parser(Lexer.ParseText(input)).Parse();
         var expr = Evaluator.Simplify(ast.ToFunction());
@@ -16,7 +16,7 @@ public class SimplifyTests
     }
 }
 
-public class SimplifyTestData : TheoryData<string, Expression>
+public class SimplifyTestData : TheoryData<string, IExpression>
 {
     public SimplifyTestData()
     {
@@ -64,7 +64,7 @@ public class SimplifyTestData : TheoryData<string, Expression>
 
     }
 
-    private static Expression Term(int lc, int exp, Expression? b = null)
+    private static IExpression Term(int lc, int exp, IExpression? b = null)
     {
         b ??= F.Var("x");
         return (lc, exp) switch

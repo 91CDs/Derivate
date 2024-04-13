@@ -3,10 +3,10 @@ namespace Derivate;
 
 public static class Derivative
 {   
-    public static Expression Dx(this Expression f)
+    public static IExpression Dx(this IExpression f)
     {
         // Given that f and g are functions and k ∈ R:
-        Expression d = f switch
+        IExpression d = f switch
         {
             // Undefined Transformation
             Undefined 
@@ -75,7 +75,7 @@ public static class Derivative
         return d.Simplify();
     }
 
-    private static Expression ProductDx(List<Expression> f)
+    private static IExpression ProductDx(List<IExpression> f)
     {
         return f switch
         {
@@ -114,7 +114,7 @@ public static class Derivative
         };
     }
 
-    private static Expression QuotientDx(Expression l, Expression r)
+    private static IExpression QuotientDx(IExpression l, IExpression r)
     {
         return Func.Mul(
             Func.Add(
@@ -125,7 +125,7 @@ public static class Derivative
         ); 
     }
 
-    private static Expression PowerDx(Expression f, Expression g)
+    private static IExpression PowerDx(IExpression f, IExpression g)
     {
         return (f, g) switch
         {

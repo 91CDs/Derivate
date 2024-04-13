@@ -7,7 +7,7 @@ public class FunctionTests
 {
     [Theory]
     [ClassData(typeof(ConstTestData))]
-    public void Const_getConstant(string input, Expression expected)
+    public void Const_getConstant(string input, IExpression expected)
     {
         var ast = new Parser(Lexer.ParseText(input)).Parse();
         var expr = Evaluator.Simplify(ast.ToFunction());
@@ -18,7 +18,7 @@ public class FunctionTests
 
     [Theory]
     [ClassData(typeof(TermTestData))]
-    public void Term_getTerm(string input, Expression expected)
+    public void Term_getTerm(string input, IExpression expected)
     {
         var ast = new Parser(Lexer.ParseText(input)).Parse();
         var expr = Evaluator.Simplify(ast.ToFunction());
@@ -27,7 +27,7 @@ public class FunctionTests
         Assert.Equal(term.ConvertToString(), expected.ConvertToString());
     }
 }
-public class ConstTestData : TheoryData<string, Expression>
+public class ConstTestData : TheoryData<string, IExpression>
 {
     public ConstTestData()
     {
@@ -37,7 +37,7 @@ public class ConstTestData : TheoryData<string, Expression>
         Add("4xsin(x)", F.Num(4));
     }
 }
-public class TermTestData : TheoryData<string, Expression>
+public class TermTestData : TheoryData<string, IExpression>
 {
     public TermTestData()
     {

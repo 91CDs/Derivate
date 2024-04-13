@@ -22,7 +22,7 @@ public static class FormatterExtensions
             _ => throw new ArgumentOutOfRangeException(nameof(node)),
         };
     }
-    public static string Format(this Expression func) 
+    public static string Format(this IExpression func) 
     {
         return func switch 
         {
@@ -66,7 +66,7 @@ public static class FormatterExtensions
     public static string FormatSum(Sum n)
     {
         StringBuilder str = new StringBuilder(n.value.First().Format());
-        foreach (Expression operand in n.value.Skip(1))
+        foreach (IExpression operand in n.value.Skip(1))
         {
             string appendStr = operand switch
             {

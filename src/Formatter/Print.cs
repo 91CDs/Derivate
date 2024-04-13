@@ -16,7 +16,7 @@ public static class PrintExtensions
         Console.WriteLine(":::::::");
         Console.WriteLine(AST.Format());
     }
-    public static void DebugPrint(this Expression Function)
+    public static void DebugPrint(this IExpression Function)
     {
         Console.WriteLine("\n::::::::::::");
         Console.WriteLine("::FUNCTION::");
@@ -26,9 +26,9 @@ public static class PrintExtensions
         Function.printPrettyFunctionTree();
     }
 
-    public static void printPrettyFunctionTree(this Expression func)
+    public static void printPrettyFunctionTree(this IExpression func)
     {
-        var tree = new PrettyPrintTree<Expression>(
+        var tree = new PrettyPrintTree<IExpression>(
             getChildren: (node) => node switch
             {
                 Number 
@@ -58,7 +58,7 @@ public static class PrintExtensions
         tree.Display(func);
     }
 
-    public static string ConvertToString(this Expression func)
+    public static string ConvertToString(this IExpression func)
     {
         return func switch
         {

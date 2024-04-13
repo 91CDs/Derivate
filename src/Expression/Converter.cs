@@ -4,7 +4,7 @@ using static Derivate.TokenType;
 namespace Derivate;
 public static class ConverterExtensions
 {
-    public static Expression ToFunction(this Node node)
+    public static IExpression ToFunction(this Node node)
     {
         return node switch
         {
@@ -89,9 +89,9 @@ public static class ConverterExtensions
         return (int) Math.Pow(10, dec.Last().Length);
     }
 
-    private static Expression combineMul(Node left, Node right)
+    private static IExpression combineMul(Node left, Node right)
     {
-        List<Expression> funcList = new();
+        List<IExpression> funcList = new();
         if (left is not Binary(MUL) l)
         {
             funcList.Add(left.ToFunction());
@@ -115,9 +115,9 @@ public static class ConverterExtensions
         return Func.Mul(funcList);
     }
 
-    private static Expression combineAdd(Node left, Node right)
+    private static IExpression combineAdd(Node left, Node right)
     {
-        List<Expression> funcList = new();
+        List<IExpression> funcList = new();
         if (left is not Binary(ADD) l)
         {
             funcList.Add(left.ToFunction());

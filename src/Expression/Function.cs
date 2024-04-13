@@ -1,22 +1,22 @@
 namespace Derivate;
 
 /// <summary>Represents general mathematical expressions</summary>
-public interface Expression {
+public interface IExpression {
     /// <summary> Compares two expression to determine whether the first 
     /// expression precedes or follows the second expression </summary>
     /// <param name="gx">The first expression</param>
     /// <returns> A boolean that returns true if the expression precedes
     /// <paramref name="gx"/> and false if not</returns>
-    bool CompareTo(Expression gx);
+    bool CompareTo(IExpression gx);
 }
 
 // Constants
 /// <summary>Represents numerical expressions</summary>
-public interface Constant: Expression
+public abstract record Constant: IExpression
 {
-    public int numerator { get; }
-    public int denominator { get; }
-    bool Expression.CompareTo(Expression gx)
+    public abstract int numerator { get; }
+    public abstract int denominator { get; }
+    public bool CompareTo(IExpression gx)
     {
         return gx switch
         {
@@ -25,14 +25,10 @@ public interface Constant: Expression
         };
     }
 }
-public readonly record struct Number(int value): Constant
+public sealed record Number(int value): Constant
 {
-    public int numerator { get => value; }
-    public int denominator { get => 1; }
-    public static Number GCD(Number a, Number b)
-    {
-        return Func.Num(MathInt.GCD(a.value, b.value)); 
-    }
+    public override int numerator { get => value; }
+    public override int denominator { get => 1; }
 
     public static implicit operator Fraction(Number a) => new(a.value, 1);
 
@@ -47,7 +43,7 @@ public readonly record struct Number(int value): Constant
             throw new DivideByZeroException();
         return Func.Frac(a.value, b.value);
     }
-    public static Expression Pow(Number a, Number b)
+    public static IExpression Pow(Number a, Number b)
     {
         return (a.value, b.value) switch
         {
@@ -59,16 +55,14 @@ public readonly record struct Number(int value): Constant
         };
     }
 }
-public readonly record struct Fraction(int numerator, int denominator): Constant
+public sealed record Fraction: Constant
 {
-    public bool CompareTo(Expression gx)
+    public override int numerator { get; }
+    public override int denominator { get; }
+    public Fraction(int _numerator, int _denominator)
     {
-        return gx switch
-        {
-            Fraction n => numerator / denominator < n.numerator / n.denominator,
-            Number n   => numerator / denominator < n.value,
-            _ => true,
-        };
+        numerator = _numerator;
+        denominator = _denominator;
     }
     
     public static Fraction operator +(Fraction a) => a;
@@ -106,10 +100,12 @@ public readonly record struct Fraction(int numerator, int denominator): Constant
 
 // Symbols
 /// <summary>Represents an unknown mathematical object</summary>
-public interface Symbols: Expression
+public abstract record Symbols(string identifier): IExpression
 {
-    public string identifier { get; }
-    bool Expression.CompareTo(Expression gx)
+    public const string Pi = "pi";
+    public const string E = "e";
+    public const string Undefined = "Undefined";
+    public bool CompareTo(IExpression gx)
     {
         return gx switch
         {
@@ -119,39 +115,26 @@ public interface Symbols: Expression
         };
     }
 }
-public readonly record struct Variable(string identifier): Symbols 
-{
-    public const string Pi = "pi";
-    public const string E = "e";
-}
-public readonly record struct Undefined: Symbols 
-{
-    public Undefined() {}
-    public string identifier { get; } = "Undefined";
-}
-public readonly record struct Pi: Symbols 
-{
-    public Pi() {}
-    public string identifier { get; } = Variable.Pi;
-}
-public readonly record struct E: Symbols 
-{
-    public E() {}
-    public string identifier { get; } = Variable.E;
-}
+public sealed record Variable(string identifier): Symbols(identifier) {}
+public sealed record Undefined(): Symbols(Undefined) {}
+public sealed record Pi(): Symbols(Pi) {}
+public sealed record E(): Symbols(E) {}
 
 // Operators
-public readonly record struct Sum(List<Expression> value) : Expression
+public sealed record Sum(List<IExpression> value) : IExpression
 {
-    public bool Equals(Sum other)
+    public bool Equals(Sum? other)
     {
+        if (other is null) 
+            return false;
+        
         return value.SequenceEqual(other.value);
     }
     public override int GetHashCode()
     {
         return value.GetHashCode();
     }
-    public bool CompareTo(Expression gx)
+    public bool CompareTo(IExpression gx)
     {
         return gx switch
         {
@@ -163,17 +146,20 @@ public readonly record struct Sum(List<Expression> value) : Expression
         };
     }
 }
-public readonly record struct Product(List<Expression> value) : Expression
+public sealed record Product(List<IExpression> value) : IExpression
 {
-    public bool Equals(Product other)
+    public bool Equals(Product? other)
     {
+        if (other is null) 
+            return false;
+        
         return value.SequenceEqual(other.value);
     }
     public override int GetHashCode()
     {
         return value.GetHashCode();
     }
-    public bool CompareTo(Expression gx)
+    public bool CompareTo(IExpression gx)
     {
         return gx switch
         {
@@ -185,9 +171,9 @@ public readonly record struct Product(List<Expression> value) : Expression
         };
     }
 }
-public readonly record struct Power(Expression Base, Expression Exponent) : Expression
+public sealed record Power(IExpression Base, IExpression Exponent) : IExpression
 {
-    public bool CompareTo(Expression gx)
+    public bool CompareTo(IExpression gx)
     {
         return gx switch
         {
@@ -205,11 +191,9 @@ public readonly record struct Power(Expression Base, Expression Exponent) : Expr
 // Functions
 /// <summary>Represents relations of a 
 /// set of inputs to a unique output</summary>
-public interface Function : Expression
+public abstract record Function(IExpression value, string name) : IExpression
 {
-    public Expression value { get; }
-    public string name { get; }
-    bool Expression.CompareTo(Expression gx)
+    public bool CompareTo(IExpression gx)
     {
         return gx switch
         {
@@ -219,14 +203,14 @@ public interface Function : Expression
         };
     }
 }
-public readonly record struct Sine(Expression value, string name = "sin"): Function {}
-public readonly record struct Cosine(Expression value, string name = "cos"): Function {}
-public readonly record struct Tangent(Expression value, string name = "tan"): Function {}
-public readonly record struct Cosecant(Expression value, string name = "csc"): Function {}
-public readonly record struct Secant(Expression value, string name = "sec"): Function {}
-public readonly record struct Cotangent(Expression value, string name = "cot"): Function {}
-public readonly record struct Log(Expression value, int Base, string name = "log"): Function {}
-public readonly record struct NaturalLog(Expression value, string name = "ln"): Function {}
+public sealed record Sine(IExpression value): Function(value, "sin") {}
+public sealed record Cosine(IExpression value): Function(value, "cos") {}
+public sealed record Tangent(IExpression value): Function(value, "tan") {}
+public sealed record Cosecant(IExpression value): Function(value, "csc") {}
+public sealed record Secant(IExpression value): Function(value, "sec") {}
+public sealed record Cotangent(IExpression value): Function(value, "cot") {}
+public sealed record Log(IExpression value, int Base): Function(value, "log") {}
+public sealed record NaturalLog(IExpression value): Function(value, "ln" ) {}
 
 public static partial class Func
 { 
@@ -234,7 +218,7 @@ public static partial class Func
     /// Returns the base of the given function or the Symbol Undefined
     /// </summary>
     /// <param name="function">The given simplified function</param>
-    public static Expression Base(this Expression function)
+    public static IExpression Base(this IExpression function)
     {
         return function switch
         {
@@ -248,7 +232,7 @@ public static partial class Func
     /// Returns the exponent part of the given function or the Symbol Undefined
     /// </summary>
     /// <param name="function">The given simplified function</param>
-    public static Expression Exponent(this Expression function)
+    public static IExpression Exponent(this IExpression function)
     {
         return function switch
         {
@@ -262,7 +246,7 @@ public static partial class Func
     /// Returns the term part of the function or the Symbol Undefined
     /// </summary>
     /// <param name="function">The given simplified function</param>
-    public static Expression Term(this Expression function)
+    public static IExpression Term(this IExpression function)
     {
         return function switch
         {
@@ -280,7 +264,7 @@ public static partial class Func
     /// Returns the constant part of the function or the Symbol Undefined
     /// </summary>
     /// <param name="function">The given simplified function</param>
-    public static Expression Const(this Expression function)
+    public static IExpression Const(this IExpression function)
     {
         return function switch
         {
@@ -294,7 +278,7 @@ public static partial class Func
         };
     }
     
-    public static bool CompareList(List<Expression> m, List<Expression> n)
+    public static bool CompareList(List<IExpression> m, List<IExpression> n)
     {
         int minCount = Math.Min(m.Count, n.Count);
 
@@ -311,25 +295,25 @@ public static partial class Func
     public static readonly Pi Pi = new();
     public static Symbols Var(string identifier) => identifier switch
     {
-        Variable.Pi => Pi,
-        Variable.E  => E,
+        Symbols.Pi => Pi,
+        Symbols.E => E,
         _           => new Variable(identifier),
     };
     public static Number Num(int value) => new(value);
     public static Fraction Frac(int numerator, int denominator) => new(numerator, denominator);
-    public static Sum Add(params Expression[] value) => new(value.ToList());
-    public static Sum Add(IEnumerable<Expression> value) => new(value.ToList());
-    public static Product Sub(Expression value) => Mul(Num(-1), value);
-    public static Product Mul(params Expression[] value) => new(value.ToList());
-    public static Product Mul(IEnumerable<Expression> value) => new(value.ToList());
-    public static Power Div(Expression value) => Pow(value, Num(-1));
-    public static Power Pow(Expression Base, Expression Exponent) => new(Base, Exponent);
-    public static Sine Sin(Expression value) => new(value);
-    public static Cosine Cos(Expression value) => new(value);
-    public static Tangent Tan(Expression value) => new(value);
-    public static Secant Sec(Expression value) => new(value);
-    public static Cosecant Csc(Expression value) => new(value);
-    public static Cotangent Cot(Expression value) => new(value);
-    public static Log Log(Expression value) => new(value, 10);
-    public static NaturalLog Ln(Expression value) => new(value);
+    public static Sum Add(params IExpression[] value) => new(value.ToList());
+    public static Sum Add(IEnumerable<IExpression> value) => new(value.ToList());
+    public static Product Sub(IExpression value) => Mul(Num(-1), value);
+    public static Product Mul(params IExpression[] value) => new(value.ToList());
+    public static Product Mul(IEnumerable<IExpression> value) => new(value.ToList());
+    public static Power Div(IExpression value) => Pow(value, Num(-1));
+    public static Power Pow(IExpression Base, IExpression Exponent) => new(Base, Exponent);
+    public static Sine Sin(IExpression value) => new(value);
+    public static Cosine Cos(IExpression value) => new(value);
+    public static Tangent Tan(IExpression value) => new(value);
+    public static Secant Sec(IExpression value) => new(value);
+    public static Cosecant Csc(IExpression value) => new(value);
+    public static Cotangent Cot(IExpression value) => new(value);
+    public static Log Log(IExpression value) => new(value, 10);
+    public static NaturalLog Ln(IExpression value) => new(value);
 }

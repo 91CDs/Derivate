@@ -10,10 +10,10 @@ public static partial class Derivate
         Node expr = Parser.Parse();
         expr.DebugPrint();
 
-        Expression fx = expr.ToFunction().Simplify();
+        IExpression fx = expr.ToFunction().Simplify();
         fx.DebugPrint();
 
-        Expression derivative = fx.Dx();
+        IExpression derivative = fx.Dx();
         derivative.DebugPrint();
     }
     public static void Main(string[] args)
