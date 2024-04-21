@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Derivate;
 
 /// <summary>Represents general mathematical expressions</summary>
@@ -12,6 +14,7 @@ public interface IExpression {
 
 // Constants
 /// <summary>Represents numerical expressions</summary>
+[DebuggerDisplay("{this.ConvertToString()}")]
 public abstract record Constant: IExpression
 {
     public abstract int numerator { get; }
@@ -25,6 +28,7 @@ public abstract record Constant: IExpression
         };
     }
 }
+// TODO: Support arbitrary length integers (BigInteger)
 public sealed record Number(int value): Constant
 {
     public override int numerator { get => value; }
@@ -55,6 +59,7 @@ public sealed record Number(int value): Constant
         };
     }
 }
+// TODO: Support arbitrary length fraction (BigInteger)
 public sealed record Fraction: Constant
 {
     public override int numerator { get; }
@@ -100,6 +105,7 @@ public sealed record Fraction: Constant
 
 // Symbols
 /// <summary>Represents an unknown mathematical object</summary>
+[DebuggerDisplay("{this.ConvertToString()}")]
 public abstract record Symbols(string identifier): IExpression
 {
     public const string Pi = "pi";
@@ -121,6 +127,7 @@ public sealed record Pi(): Symbols(Pi) {}
 public sealed record E(): Symbols(E) {}
 
 // Operators
+[DebuggerDisplay("{this.ConvertToString()}")]
 public sealed record Sum(List<IExpression> value) : IExpression
 {
     public bool Equals(Sum? other)
@@ -140,12 +147,13 @@ public sealed record Sum(List<IExpression> value) : IExpression
         {
             Sum n 
                 => Func.CompareList(value, n.value),
-            var n when n is Variable or Function
+            var n when n is Symbols or Function
                 => Func.CompareList(value, [n]),
             _ => !gx.CompareTo(this)
         };
     }
 }
+[DebuggerDisplay("{this.ConvertToString()}")]
 public sealed record Product(List<IExpression> value) : IExpression
 {
     public bool Equals(Product? other)
@@ -165,23 +173,24 @@ public sealed record Product(List<IExpression> value) : IExpression
         {
             Product n 
                 => Func.CompareList(value, n.value),
-            var n when n is Power or Sum or Variable or Function
+            var n when n is Power or Sum or Symbols or Function
                 => Func.CompareList(value, [n]),
             _ => !gx.CompareTo(this)
         };
     }
 }
+[DebuggerDisplay("{this.ConvertToString()}")]
 public sealed record Power(IExpression Base, IExpression Exponent) : IExpression
 {
     public bool CompareTo(IExpression gx)
     {
         return gx switch
         {
-            Power n when Base.Equals(n.Base) 
-                => Base.CompareTo(n.Base),
             Power n when !Base.Equals(n.Base) 
+                => Base.CompareTo(n.Base),
+            Power n when Base.Equals(n.Base) 
                 => Exponent.CompareTo(n.Exponent),
-            var n when n is Sum or Variable or Function
+            var n when n is Sum or Symbols or Function
                 => CompareTo(Func.Pow(n, Func.Num(1))),
             _ => !gx.CompareTo(this)
         };
@@ -191,14 +200,21 @@ public sealed record Power(IExpression Base, IExpression Exponent) : IExpression
 // Functions
 /// <summary>Represents relations of a 
 /// set of inputs to a unique output</summary>
+[DebuggerDisplay("{this.ConvertToString()}")]
 public abstract record Function(IExpression value, string name) : IExpression
 {
     public bool CompareTo(IExpression gx)
     {
         return gx switch
         {
-            Function n => name.CompareTo(n.name) < 0,
-            Variable n => name.CompareTo(n.identifier) < 0,
+            Function n 
+            when name.CompareTo(n.name) < 0 
+                => true,
+            Function n 
+            when name.CompareTo(n.name) == 0 
+                => value.CompareTo(n.value),
+            Symbols n 
+                => name.CompareTo(n.identifier) < 0,
             _ => !gx.CompareTo(this)
         };
     }
@@ -285,7 +301,7 @@ public static partial class Func
         for (int i = 1; i <= minCount; i++)
         {
             int mi = m.Count - i, ni = n.Count - i;
-            if (m[mi] != n[ni])
+            if (!m[mi].Equals(n[ni]))
                 return m[mi].CompareTo(n[ni]);
         }
         return m.Count < n.Count;
@@ -296,8 +312,8 @@ public static partial class Func
     public static Symbols Var(string identifier) => identifier switch
     {
         Symbols.Pi => Pi,
-        Symbols.E => E,
-        _           => new Variable(identifier),
+        Symbols.E  => E,
+        _          => new Variable(identifier),
     };
     public static Number Num(int value) => new(value);
     public static Fraction Frac(int numerator, int denominator) => new(numerator, denominator);

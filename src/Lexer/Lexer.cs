@@ -126,5 +126,6 @@ public static class Lexer
         return validPrevToken && validCurrentToken;
     }
 
+    // TODO: Support string type variables & char variables not on the list
     static bool isVariable(char input) => "xyzabc".ToList().Contains(input);
 }

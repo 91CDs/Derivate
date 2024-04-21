@@ -33,9 +33,9 @@ public class SimplifyTestData : TheoryData<string, IExpression>
         Add("2x^5 - 3x^5", // Subtracting Like Terms
             Term(-1, 5));
         Add("1 + 3sin(x) - 2x^2 + 5sin(x) + 7x^2 - 2", // Adding Like Terms 2
-            F.Add(Term(-1, 0), Term(8, 1, F.Sin(F.Var("x"))), Term(5, 2)));
-        Add("2x^2(5)(sin(x))x^3(sin(x))", // Product Rule 2
-            F.Mul(Term(10, 0), Term(1, 2, F.Sin(F.Var("x"))), Term(1, 5)));
+            F.Add(Term(-1), Term(8, 1, F.Sin(F.Var("x"))), Term(5, 2)));
+        Add("2x^2(5)(sin(x))x^3(sin(x))",              // Product Rule 2
+            F.Mul(Term(10), Term(1, 2, F.Sin(F.Var("x"))), Term(1, 5)));
 
         // Identity Properties
         Add("0^0", F.Undefined);
@@ -63,8 +63,7 @@ public class SimplifyTestData : TheoryData<string, IExpression>
         Add("-x", Term(-1, 1));
 
     }
-
-    private static IExpression Term(int lc, int exp, IExpression? b = null)
+    private static IExpression Term(int lc, int exp = 0, IExpression? b = null)
     {
         b ??= F.Var("x");
         return (lc, exp) switch

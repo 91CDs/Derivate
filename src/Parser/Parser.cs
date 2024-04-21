@@ -1,4 +1,5 @@
 namespace Derivate;
+// TODO: Remove node & change parser
 public class Parser
 {
     int pos = 0;
