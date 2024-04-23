@@ -2,7 +2,6 @@ using F = Derivate.Func;
 using Derivate;
 
 namespace DerivateTests;
-
 public class FunctionTests
 {
     [Theory]
@@ -39,6 +38,17 @@ public class FunctionTests
             .ToFunction();
         Assert.True(exprFirst.CompareTo(exprOther));
     }
+
+    [Theory]
+    [ClassData(typeof(ExpandTestData))]
+    public void Expand_ExpandExpressions(string input, IExpression expected)
+    {
+        var ast = new Parser(Lexer.ParseText(input)).Parse();
+        var expr = Evaluator.Simplify(ast.ToFunction());
+        var term = expr.Expand();
+
+        Assert.Equal(term.ConvertToString(), expected.Simplify().ConvertToString());
+    }
 }
 public class ConstTestData : TheoryData<string, IExpression>
 {
@@ -58,6 +68,70 @@ public class TermTestData : TheoryData<string, IExpression>
         Add("x^2", F.Mul(F.Pow(F.Var("x"), F.Num(2))));
         Add("3x", F.Mul(F.Var("x")));
         Add("4xsin(x)", F.Mul(F.Sin(F.Var("x")), F.Var("x")));
+    }
+}
+public class ExpandTestData : TheoryData<string, IExpression>
+{
+    public ExpandTestData()
+    {
+        Add("(2x + 5)(x + 2)", 
+            F.Add(
+                F.Num(10),
+                F.Mul(F.Num(9), F.Var("x")),
+                F.Mul(F.Num(2), F.Pow(F.Var("x"), F.Num(2)))
+            ));
+        Add("(x + y)^3",
+            F.Add(
+                F.Pow(F.Var("x"), F.Num(3)),
+                F.Pow(F.Var("y"), F.Num(3)),
+                F.Mul(F.Num(3), F.Pow(F.Var("x"), F.Num(2)), F.Var("y")),
+                F.Mul(F.Num(3), F.Pow(F.Var("y"), F.Num(2)), F.Var("x"))
+            ));
+        Add("(x + 2)^2 + (y + 2)^2",
+            F.Add(
+                F.Num(8),
+                F.Mul(F.Num(4), F.Var("x")),
+                F.Mul(F.Num(4), F.Var("y")),
+                F.Pow(F.Var("x"), F.Num(2)),
+                F.Pow(F.Var("y"), F.Num(2))
+            ));
+        Add("(x + y + z)^3",
+            F.Add(
+                F.Pow(F.Var("x"), F.Num(3)),
+                F.Pow(F.Var("y"), F.Num(3)),
+                F.Pow(F.Var("z"), F.Num(3)),
+                F.Mul(F.Num(3), F.Pow(F.Var("x"), F.Num(2)), F.Var("y")),
+                F.Mul(F.Num(3), F.Pow(F.Var("x"), F.Num(2)), F.Var("z")),
+                F.Mul(F.Num(3), F.Pow(F.Var("y"), F.Num(2)), F.Var("x")),
+                F.Mul(F.Num(3), F.Pow(F.Var("y"), F.Num(2)), F.Var("z")),
+                F.Mul(F.Num(3), F.Pow(F.Var("z"), F.Num(2)), F.Var("x")),
+                F.Mul(F.Num(3), F.Pow(F.Var("z"), F.Num(2)), F.Var("y")),
+                F.Mul(F.Num(6), F.Var("x"), F.Var("y"), F.Var("z"))
+            ));
+        Add("(x + 2)(x + 3)(x + 4)",
+            F.Add(
+                F.Num(24),
+                F.Mul(F.Num(26), F.Var("x")),
+                F.Mul(F.Num(9), F.Pow(F.Var("x"), F.Num(2))),
+                F.Pow(F.Var("x"), F.Num(3))
+            ));
+        Add("(2x(x + 1)^2 + 2)^2",
+            F.Add(
+                F.Num(4),
+                F.Mul(F.Num(8), F.Var("x")),
+                F.Mul(F.Num(20), F.Pow(F.Var("x"), F.Num(2))),
+                F.Mul(F.Num(24), F.Pow(F.Var("x"), F.Num(3))),
+                F.Mul(F.Num(24), F.Pow(F.Var("x"), F.Num(4))),
+                F.Mul(F.Num(16), F.Pow(F.Var("x"), F.Num(5))),
+                F.Mul(F.Num(4), F.Pow(F.Var("x"), F.Num(6)))
+            ));
+        Add("(x + 2)(x + 2)^2",
+            F.Add(
+                F.Num(8),
+                F.Mul(F.Num(12), F.Var("x")),
+                F.Mul(F.Num(6), F.Pow(F.Var("x"), F.Num(2))),
+                F.Pow(F.Var("x"), F.Num(3))
+            ));
     }
 }
 public class CompareTestData : TheoryData<string, string>

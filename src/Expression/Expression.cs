@@ -293,6 +293,16 @@ public static partial class Func
             _ => Num(1),
         };
     }
+
+    public static List<IExpression> ToList(this IExpression expr)
+    {
+        return expr switch
+        {
+            Sum a => a.value,
+            Product a => a.value,
+            _ => [expr],
+        };
+    }
     
     public static bool CompareList(List<IExpression> m, List<IExpression> n)
     {

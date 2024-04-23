@@ -42,4 +42,20 @@ public static class MathInt {
         else
             return (a, s1, t1);
     } 
+
+    /// <summary>Returns the binomial coefficient nCk (n choose k)</summary>
+    public static uint BinomialCoefficient(uint n, uint k)
+    {
+        // https://blog.plover.com/math/choose.html
+        if (k > n) 
+            return 0;
+
+        uint coeff = 1;
+        for (uint i = 1; i <= k; i++)
+        {
+            coeff *= n--;
+            coeff /= i;
+        }
+        return coeff;
+    }
 }

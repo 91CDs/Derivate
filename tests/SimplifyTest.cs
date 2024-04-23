@@ -1,5 +1,6 @@
 using F = Derivate.Func;
 using Derivate;
+using static DerivateTests.ExpressionUtil;
 
 namespace DerivateTests;
 
@@ -61,19 +62,5 @@ public class SimplifyTestData : TheoryData<string, IExpression>
 
         // Unary Transformations
         Add("-x", Term(-1, 1));
-
-    }
-    private static IExpression Term(int lc, int exp = 0, IExpression? b = null)
-    {
-        b ??= F.Var("x");
-        return (lc, exp) switch
-        {
-            (0, _) => F.Num(0),
-            (_, 0) => F.Num(lc),
-            (1, 1) => b,
-            (1, _) => F.Pow(b, F.Num(exp)),
-            (_, 1) => F.Mul(F.Num(lc), b),
-            (_, _) => F.Mul(F.Num(lc), F.Pow(b, F.Num(exp))),
-        };
     }
 }
