@@ -293,13 +293,50 @@ public static partial class Func
             _ => Num(1),
         };
     }
+    
+    /// <summary>Returns false when <paramref name="other"/> is equal to a 
+    /// complete sub-expression of <paramref name="expr"/> and true if
+    /// otherwise</summary>
+    public static bool FreeOf(this IExpression expr, IExpression other)
+    {
+        if (expr.Equals(other))
+            return false;
+        if (expr is Symbols or Constant)
+            return true;
 
+        foreach (var operand in expr.ToList())
+        {
+            if (!operand.FreeOf(other))
+                return false;  
+        }
+
+        return true;
+    }
+
+    /// <summary>Checks if expr is free of all expressions in the set 
+    /// <paramref name="other"/></summary>
+    public static bool FreeOf(this IExpression expr, HashSet<IExpression> other)
+    {
+        foreach (var element in other)
+        {            
+            foreach (var operand in expr.ToList())
+            {
+                if (!operand.FreeOf(element))
+                    return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>Returns the list of operands of the expression</summary>
     public static List<IExpression> ToList(this IExpression expr)
     {
         return expr switch
         {
             Sum a => a.value,
             Product a => a.value,
+            Power a => [a.Base, a.Exponent],
             _ => [expr],
         };
     }
@@ -334,6 +371,7 @@ public static partial class Func
     public static Product Mul(IEnumerable<IExpression> value) => new(value.ToList());
     public static Power Div(IExpression value) => Pow(value, Num(-1));
     public static Power Pow(IExpression Base, IExpression Exponent) => new(Base, Exponent);
+    public static Power Root(IExpression Radicand, int degree) => new(Radicand, Frac(1, degree));
     public static Sine Sin(IExpression value) => new(value);
     public static Cosine Cos(IExpression value) => new(value);
     public static Tangent Tan(IExpression value) => new(value);

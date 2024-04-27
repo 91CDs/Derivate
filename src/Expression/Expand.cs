@@ -1,3 +1,5 @@
+using System.Security.Cryptography.X509Certificates;
+
 namespace Derivate;
 
 public static partial class Func
@@ -46,13 +48,13 @@ public static partial class Func
             {
                 (var a, var b)
                 when a is Sum or Power && b is Sum or Power
-                    => DistributeTerms(a.Expand().ToList(), b.Expand().ToList()),
+                    => DistributeTerms(ToSumList(a.Expand()), ToSumList(b.Expand())),
                 (var a, var b)
                 when b is Sum or Power
-                    => DistributeTerms([a], b.Expand().ToList()),
+                    => DistributeTerms([a], ToSumList(b.Expand())),
                 (var a, var b)
                 when a is Sum or Power
-                    => DistributeTerms(a.Expand().ToList(), [b]),
+                    => DistributeTerms(ToSumList(a.Expand()), [b]),
 
                 _ => Mul(operands),
             };
@@ -61,6 +63,9 @@ public static partial class Func
         operands = operands.Select(Expand).ToList();
         IExpression rest = ExpandProduct(operands.Skip(1).ToList());
         return ExpandProduct([operands.First(), rest]).Simplify();
+
+        List<IExpression> ToSumList(IExpression a) 
+            => a is Sum sum ? sum.value : [a];
     }
 
     /// <summary>
@@ -102,7 +107,7 @@ public static partial class Func
         return Add(sumList).Simplify();
     }
 
-    /// <summary>Return expanded from of two products using the distributive 
+    /// <summary>Return expanded form of two sum using the distributive 
     /// property of multiplication</summary>
     private static IExpression DistributeTerms(List<IExpression> first, List<IExpression> second)
     {

@@ -28,7 +28,7 @@ public class FunctionTests
 
     [Theory]
     [ClassData(typeof(CompareTestData))]
-    public void Term_CompareTwoExpressions(string first, string other)
+    public void Compare_CompareTwoExpressions(string first, string other)
     {
         var exprFirst = new Parser(Lexer.ParseText(first))
             .Parse()
@@ -45,9 +45,9 @@ public class FunctionTests
     {
         var ast = new Parser(Lexer.ParseText(input)).Parse();
         var expr = Evaluator.Simplify(ast.ToFunction());
-        var term = expr.Expand();
+        var expanded = expr.Expand();
 
-        Assert.Equal(term.ConvertToString(), expected.Simplify().ConvertToString());
+        Assert.Equal(expanded.ConvertToString(), expected.Simplify().ConvertToString());
     }
 }
 public class ConstTestData : TheoryData<string, IExpression>
