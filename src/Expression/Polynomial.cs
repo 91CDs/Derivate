@@ -196,8 +196,47 @@ public static class GeneralPolynomial
     /// <param name="dividend">The univariate polynomial to be divided</param>
     /// <param name="divisor">The univariate polynomial divisor</param>
     /// <returns>A tuple (q, r) where q is quotient and r is remainder</returns>
-    public static (IExpression, IExpression) DivRem(IExpression dividend, IExpression divisor)
+    public static (IExpression quotient, IExpression remainder) DivRem(
+        this IExpression dividend,
+        IExpression divisor,
+        IExpression variable)
     {
-        throw new NotImplementedException();
+        IExpression quot = Func.Num(0);
+        IExpression rem = dividend;
+        int remdeg = rem.Degree([variable]);
+        int divdeg = divisor.Degree([variable]);  
+        var divlc = divisor.LeadingCoefficient(variable);
+        
+        // Long division method: terminates when deg(r) < deg(divisor)
+        while (remdeg >= divdeg)
+        {
+            var remlc = rem.LeadingCoefficient(variable);
+            var lc = Func.Mul(remlc, Func.Div(divlc)).Simplify();
+            var a = Func.Mul(lc, Func.Pow(variable, Func.Num(remdeg - divdeg)));
+            quot = Func.Add(quot, a).Simplify();
+            rem = Func.Add(
+                rem, 
+                Func.Mul(
+                    Func.Num(-1), 
+                    remlc, 
+                    Func.Pow(variable, Func.Num(remdeg))
+                ),
+                Func.Mul([
+                    Func.Num(-1),
+                    Func.Add(
+                        divisor,
+                        Func.Mul(
+                            Func.Num(-1), 
+                            divlc, 
+                            Func.Pow(variable, Func.Num(divdeg))
+                        )
+                    ),
+                    .. a.value,
+                ])
+            ).Simplify().Expand();
+            // rem = Func.Add(rem, Func.Sub(Func.Mul(a, divisor))).Simplify().Expand();
+            remdeg = rem.Degree([variable]);
+        }
+        return (quot, rem);
     }
 }

@@ -56,8 +56,10 @@ public class SimplifyTestData : TheoryData<string, IExpression>
         // Numerical Transformations
         Add("5 + 20", F.Num(25));
         Add("20 - 5", F.Num(15));
+        Add("20 - 20 + 20 - 20", F.Num(0));
         Add("20 / 5", F.Num(4));
         Add("20 * 5", F.Num(100));
+        Add("20 / 20 * 20 / 20", F.Num(1));
         Add("2 ^ 5" , F.Num(32));
 
         // Unary Transformations

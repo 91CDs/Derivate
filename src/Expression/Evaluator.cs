@@ -83,6 +83,7 @@ public static class Evaluator
     }
     private static IExpression SimplifySum(List<IExpression> function)
     {
+        Debug.Assert(function.Count > 0);
         function = function.Select(Simplify).ToList();
 
         // Undefined
@@ -125,15 +126,24 @@ public static class Evaluator
         
         IExpression rest = SimplifySum(function.Skip(1).ToList());
         IEnumerable<IExpression> restList = rest is Sum expr ? expr.value : [rest];
-        return function.First() switch
+        Sum output = function.First() switch
         {
             Sum p => MergeSum(restList, p.value),
             var p => MergeSum(restList, [p]),
+        };
+
+        return output.value switch
+        {
+            [ ] => Func.Num(0),
+            _ => output
         };
     }
 
     private static Sum MergeSum(IEnumerable<IExpression> a, IEnumerable<IExpression> b)
     {
+        if (!a.Any() && !b.Any())
+            return Func.Add();
+
         if (!a.Any())
             return Func.Add(b);
 
@@ -156,6 +166,7 @@ public static class Evaluator
 
     private static IExpression SimplifyProduct(List<IExpression> function)
     {
+        Debug.Assert(function.Count > 0);
         function = function.Select(Simplify).ToList();
 
         // Undefined
@@ -201,15 +212,24 @@ public static class Evaluator
 
         IExpression rest = SimplifyProduct(function.Skip(1).ToList());
         IEnumerable<IExpression> restList = rest is Product expr ? expr.value : [rest];
-        return function.First() switch
+        Product output = function.First() switch
         {
             Product p => MergeProduct(restList, p.value),
             var p => MergeProduct(restList, [p]),
+        };
+
+        return output.value switch
+        {
+            [ ] => Func.Num(1),
+            _ => output
         };
     }
 
     private static Product MergeProduct(IEnumerable<IExpression> a, IEnumerable<IExpression> b)
     {
+        if (!a.Any() && !b.Any())
+            return Func.Mul();
+        
         if (!a.Any())
             return Func.Mul(b);
 

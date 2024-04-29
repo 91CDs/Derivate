@@ -72,6 +72,27 @@ public class PolynomialTests
 
         Assert.Equal(degree, expected);
     }
+
+    [Theory]
+    [ClassData(typeof(DivideTestData))]
+    public void DivRem_DivideTwoPolynomials(
+        string input,
+        string input2,
+        string input3,
+        IExpression expectedQuot,
+        IExpression expectedRem)
+    {
+        var dividend = new Parser(Lexer.ParseText(input)).Parse()
+            .ToFunction().Simplify();
+        var divisor = new Parser(Lexer.ParseText(input2)).Parse()
+            .ToFunction().Simplify();
+        var variable = new Parser(Lexer.ParseText(input3)).Parse()
+            .ToFunction().Simplify();
+        var (quot, rem) = dividend.DivRem(divisor, variable);
+
+        Assert.Equal(quot, expectedQuot.Simplify());
+        Assert.Equal(rem, expectedRem.Simplify());
+    }
 }
 
 public class MonomialTestData : TheoryData<string, HashSet<IExpression>, bool>
@@ -128,5 +149,25 @@ public class VariablesTestData : TheoryData<string, HashSet<IExpression>>
         Add("3yx^2 + 2xy^3 + 1", [F.Var("x"), F.Var("y")]);
         Add("2yz^2cos(x^2)", [F.Var("y"), F.Var("z"), F.Cos(F.Pow(F.Var("x"), F.Num(2)))]);
         Add("3^(1/2)x + 2^(1/3)x + 1", [F.Root(F.Num(3), 2), F.Root(F.Num(2), 3), F.Var("x")]);
+    }
+}
+public class DivideTestData : TheoryData<string, string, string, IExpression, IExpression>
+{
+    public DivideTestData()
+    {
+        Add("x^2 + 3x - 10", "x - 2", "x", 
+            F.Add(F.Num(5), F.Var("x")), 
+            F.Num(0));
+        Add("2x^5 + 6x^4 - 20x^3 - 5x^2 - 13x + 45", "x^2 + 3x - 10", "x", 
+            F.Add(F.Mul(F.Num(2), F.Pow(F.Var("x"), F.Num(3))), F.Num(-5)),
+            F.Add(F.Mul(F.Num(2), F.Var("x")), F.Num(-5)));
+        Add("x", "x + 2^(1/2)x", "x",
+            F.Mul(F.Num(1), F.Div(
+                F.Add(
+                    F.Num(1), 
+                    F.Pow(F.Num(2), F.Frac(1, 2))
+                )
+            )),
+            F.Num(0));
     }
 }
