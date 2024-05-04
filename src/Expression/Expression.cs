@@ -110,6 +110,7 @@ public abstract record Symbols(string identifier): IExpression
 {
     public const string Pi = "pi";
     public const string E = "e";
+    public const string I = "i";
     public const string Undefined = "Undefined";
     public bool CompareTo(IExpression gx)
     {
@@ -125,6 +126,7 @@ public sealed record Variable(string identifier): Symbols(identifier) {}
 public sealed record Undefined(): Symbols(Undefined) {}
 public sealed record Pi(): Symbols(Pi) {}
 public sealed record E(): Symbols(E) {}
+public sealed record I(): Symbols(I) {}
 
 // Operators
 [DebuggerDisplay("{this.ConvertToString()}")]
@@ -233,10 +235,12 @@ public static partial class Func
     public static readonly Undefined Undefined = new();
     public static readonly E E = new();
     public static readonly Pi Pi = new();
+    public static readonly I I = new();
     public static Symbols Var(string identifier) => identifier switch
     {
         Symbols.Pi => Pi,
         Symbols.E  => E,
+        Symbols.I  => I,
         _          => new Variable(identifier),
     };
     public static Number Num(int value) => new(value);
