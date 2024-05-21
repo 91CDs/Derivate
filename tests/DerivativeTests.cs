@@ -9,8 +9,8 @@ public class DerivativeTests
     [ClassData(typeof(DerivativeTestData))]
     public void Dx_ShouldFindDerivativeOfExpression(string input, IExpression expected)
     {
-        Node ast = new Parser(Lexer.ParseText(input)).Parse();
-        IExpression dx = Derivative.Dx(ast.ToFunction().Simplify());
+        IExpression ast = new Parser(Lexer.ParseText(input)).Parse();
+        IExpression dx = Derivative.Dx(ast.Simplify());
 
         Assert.Equal(dx.ConvertToString(), expected.Simplify().ConvertToString());
     }

@@ -9,13 +9,6 @@ public static class PrintExtensions
         Console.WriteLine(":::::::::::::");
         Console.WriteLine(tokens.Format());
     }
-    public static void DebugPrint(this Node AST)
-    {
-        Console.WriteLine("\n:::::::");
-        Console.WriteLine("::AST::");
-        Console.WriteLine(":::::::");
-        Console.WriteLine(AST.Format());
-    }
     public static void DebugPrint(this IExpression Function)
     {
         Console.WriteLine("\n::::::::::::");
@@ -68,14 +61,7 @@ public static class PrintExtensions
             Product n    => $"*[{string.Join(", ", n.value.Select(n => n.ConvertToString()))}]",
             Sum n        => $"+[{string.Join(", ", n.value.Select(n => n.ConvertToString()))}]",
             Power n      => $"({n.Base.ConvertToString()}^{n.Exponent.ConvertToString()})",
-            Sine n       => $"sin({n.value.ConvertToString()})",
-            Cosine n     => $"cos({n.value.ConvertToString()})",
-            Tangent n    => $"tan({n.value.ConvertToString()})",
-            Secant n     => $"sec({n.value.ConvertToString()})",
-            Cosecant n   => $"csc({n.value.ConvertToString()})",
-            Cotangent n  => $"cot({n.value.ConvertToString()})",
-            Log n        => $"log({n.value.ConvertToString()})",
-            NaturalLog n => $"ln({n.value.ConvertToString()})",
+            Function n   => $"{n.name}({n.value.ConvertToString()})",
 
             _ => throw new ArgumentOutOfRangeException(nameof(func)),
         };

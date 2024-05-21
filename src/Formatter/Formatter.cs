@@ -1,5 +1,4 @@
 using System.Text;
-using static Derivate.TokenType;
 namespace Derivate;
 
 public static class FormatterExtensions
@@ -8,20 +7,6 @@ public static class FormatterExtensions
     {
         string tokensStr = string.Join(" , ", tokens.Select(t => t.ToString()));
         return $"[ {tokensStr} ]";
-    }
-
-    public static string Format(this Node node)
-    {
-        return node switch
-        {
-            Binary n    => $"({n.left.Format()}){n.value}({n.right.Format()})",
-            Unary n     => $"{n.value}({n.right.Format()})",
-            Literal(CONST, _) n => Token.MathConstants(n.value),
-            Literal n   => n.value.ToString(),
-            Symbol n  => n.value.ToString()!,
-
-            _ => throw new ArgumentOutOfRangeException(nameof(node)),
-        };
     }
 
     public static string Format(this IExpression func) 

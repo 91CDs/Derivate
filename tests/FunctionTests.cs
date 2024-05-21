@@ -9,7 +9,7 @@ public class FunctionTests
     public void Const_getConstant(string input, IExpression expected)
     {
         var ast = new Parser(Lexer.ParseText(input)).Parse();
-        var expr = Evaluator.Simplify(ast.ToFunction());
+        var expr = Evaluator.Simplify(ast);
         var constant = expr.Const();
 
         Assert.Equal(constant.ConvertToString(), expected.ConvertToString());
@@ -20,7 +20,7 @@ public class FunctionTests
     public void Term_getTerm(string input, IExpression expected)
     {
         var ast = new Parser(Lexer.ParseText(input)).Parse();
-        var expr = Evaluator.Simplify(ast.ToFunction());
+        var expr = Evaluator.Simplify(ast);
         var term = expr.Term();
 
         Assert.Equal(term.ConvertToString(), expected.ConvertToString());
@@ -30,12 +30,8 @@ public class FunctionTests
     [ClassData(typeof(CompareTestData))]
     public void Compare_CompareTwoExpressions(string first, string other)
     {
-        var exprFirst = new Parser(Lexer.ParseText(first))
-            .Parse()
-            .ToFunction();
-        var exprOther = new Parser(Lexer.ParseText(other))
-            .Parse()
-            .ToFunction();
+        var exprFirst = new Parser(Lexer.ParseText(first)).Parse();
+        var exprOther = new Parser(Lexer.ParseText(other)).Parse();
         Assert.True(exprFirst.CompareTo(exprOther));
     }
 
@@ -44,7 +40,7 @@ public class FunctionTests
     public void Expand_ExpandExpressions(string input, IExpression expected)
     {
         var ast = new Parser(Lexer.ParseText(input)).Parse();
-        var expr = Evaluator.Simplify(ast.ToFunction());
+        var expr = Evaluator.Simplify(ast);
         var expanded = expr.Expand();
 
         Assert.Equal(expanded.ConvertToString(), expected.Simplify().ConvertToString());

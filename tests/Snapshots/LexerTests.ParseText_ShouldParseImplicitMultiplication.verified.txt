@@ -44,8 +44,8 @@
     value: *
   },
   {
-    type: CONST,
-    value: 3.141592653589793
+    type: VAR,
+    value: pi
   },
   {
     type: RPAREN,
@@ -72,8 +72,8 @@
     value: *
   },
   {
-    type: CONST,
-    value: 2.718281828459045
+    type: VAR,
+    value: e
   },
   {
     type: FLOAT,

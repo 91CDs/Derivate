@@ -1,174 +1,219 @@
 namespace Derivate;
-// TODO: Remove node & change parser
-public class Parser
+using PrefixParselet = Func<Token, IExpression>;
+using InfixParselet = Func<IExpression, Token, IExpression>;
+
+public enum Precedence
 {
-    int pos = 0;
-    readonly List<Token> tokens;
-    public Parser(List<Token> tokens)
-    {
-        this.tokens = tokens;
-    }
-
-    Token advance()
-    {
-        if (!isAtEnd()) pos++;
-        return previous();
-    }
-
-    Token current()
-    {
-        return tokens[pos];
-    }
-
-    Token previous()
-    {
-        return tokens[pos - 1];
-    }  
-    bool isAtEnd()
-    {
-        return current().type == TokenType.EOF;
-    }
-
-    bool check(TokenType type)
-    {
-        if (isAtEnd()) return false;
-        return current().type == type;
-    }
-
-    /* matches current token and if its true, advances to the next token */
-    bool match(params TokenType[] types) 
-    {
-        foreach (var type in types)
-        {
-            if (check(type))
-            {
-                advance();
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    void consume(TokenType type, string err) 
-    {
-        if (check(type))
-        {
-            advance();
-            return;
-        }
-
-        throw Derivate.ParserError(err, pos);
-    }
-
-    Node expression()
-    {
-        Node l = term();
-
-        while (match(TokenType.ADD, TokenType.SUB))
-        {
-            Token op = previous();
-            Node r = term();
-            l = new Binary(l, op, r);
-        }
-   
-        return l;
-    }
-
-    Node term()
-    {
-        Node l = exponent();
-
-        while (match(TokenType.MUL, TokenType.DIV))
-        {
-            Token op = previous();
-            Node r = exponent();
-
-            l = new Binary(l, op, r);
-        }
-        return l;
-    }
-
-    Node exponent()
-    {
-        Node l = unary();
-
-        if (match(TokenType.EXP))
-        {
-            Token op = previous();
-            Node r = exponent();
-            l = new Binary(l, op, r);
-        }
-
-        return l;
-    }
-
-    Node unary()
-    {
-        if (match(
-            TokenType.SIN, TokenType.COS, TokenType.TAN, TokenType.CSC, TokenType.SEC, 
-            TokenType.COT, TokenType.LOG, TokenType.LN, TokenType.SUB
-        ))
-        {
-            return new Unary(previous(), factor());
-        }
-
-        return factor();
-    }
-
-    Node factor()
-    {   
-        if (match(TokenType.INT, TokenType.FLOAT, TokenType.CONST))
-            return new Literal(previous());
-        if (match(TokenType.VAR))
-            return new Symbol(previous());
-
-        if (match(TokenType.LPAREN))
-        {
-            Node expr = expression();
-            consume(TokenType.RPAREN,  "Expected ')'");
-            return expr;
-        }
-
-        throw Derivate.ParserError($"Expected a valid expression [{tokens[pos]}]", pos + 1);
-    }
-
-    public Node Parse()
-    {
-        return expression();
-    }
+    Lowest,
+    Sum,
+    Product,
+    Exponent,
+    Prefix,
 }
 
-/* 
-Factor
-    Number
-    | Variable
-    | Constant
+public class Parser
+{
+    readonly Dictionary<TokenType, PrefixParselet> prefixParselets = new();  
+    readonly Dictionary<TokenType, InfixParselet> infixParselets = new();  
+    static readonly Dictionary<TokenType, Precedence> precedence = new()
+    {
+        [TokenType.ADD] = Precedence.Sum,
+        [TokenType.SUB] = Precedence.Sum,
+        [TokenType.MUL] = Precedence.Product,
+        [TokenType.DIV] = Precedence.Product,
+        [TokenType.EXP] = Precedence.Exponent,
+        [TokenType.SIN] = Precedence.Prefix,
+        [TokenType.COS] = Precedence.Prefix,
+        [TokenType.TAN] = Precedence.Prefix,
+        [TokenType.CSC] = Precedence.Prefix,
+        [TokenType.SEC] = Precedence.Prefix,
+        [TokenType.COT] = Precedence.Prefix,
+        [TokenType.LOG] = Precedence.Prefix,
+        [TokenType.LN]  = Precedence.Prefix,
+    };
+    readonly List<Token> tokens;
+    int pos;
+    Token current;
+    Token next;
 
-Unary
-    TRIGONOMETRY( <factor> ) 
-    | LOGARITHM( <factor> )
-    | factor
+    public Parser(List<Token> _tokens) 
+    {
+        tokens = _tokens;
+        Advance();
 
-Term
-    <unary> * <unary>
-    | <unary> / <unary>
-    | <unary> ^ <unary>
-    | unary
+        Register(TokenType.LPAREN, ParseGroup);
+        Register(TokenType.INT, ParseInteger);
+        Register(TokenType.FLOAT, ParseFloat);
+        Register(TokenType.VAR, ParseSymbol);
 
-Expression
-    <term> Plus <term>
-    | <term> Minus <term>
-    | term
-*/
+        Register(TokenType.SIN, ParseUnary);
+        Register(TokenType.COS, ParseUnary);
+        Register(TokenType.TAN, ParseUnary);
+        Register(TokenType.CSC, ParseUnary);
+        Register(TokenType.SEC, ParseUnary);
+        Register(TokenType.COT, ParseUnary);
+        Register(TokenType.LOG, ParseUnary);
+        Register(TokenType.LN,  ParseUnary);
+        Register(TokenType.SUB, ParseUnary);
 
-/* 
-    * Example: 8x^6
-    * 8 * x ^ 6    | expr()
-    * <8> * x ^ 6  | match is true > factor | *for each true match, it advances to next thing
-    * 8 <*> x ^ 6  | match is true > term
-    * 8 * <x> ^ 6  | match is true > factor
-    * 8 * x <^> 6  | match is true > term
-    * 8 * x ^ <6>  | match is true > factor
-    * 8*x^6 </>    | end
-*/
+        Register(TokenType.ADD, ParseNary);
+        Register(TokenType.MUL, ParseNary);
+        Register(TokenType.SUB, ParseBinary);
+        Register(TokenType.DIV, ParseBinary);
+        Register(TokenType.EXP, ParsePower);
+    }
+
+    Symbols ParseSymbol(Token token) 
+    {
+        return token.value switch
+        {
+            Symbols.E => Func.E,
+            Symbols.I => Func.I,
+            Symbols.Pi => Func.Pi,
+            _ => new Variable(token.value.ToString()!)
+        };
+    }
+
+    Number ParseInteger(Token token) => new((int) token.value);
+
+    Fraction ParseFloat(Token token) 
+    {
+        double a = Convert.ToDouble(token.value);
+        string[] dec = a.ToString().Split(".");
+        int numerator = int.Parse(string.Concat(dec));
+        int denominator = (int) Math.Pow(10, dec.Last().Length);
+        return new(numerator, denominator);
+    }
+
+    IExpression ParseGroup(Token token)
+    {
+        Advance();
+        IExpression expr = Parse();
+        Consume(TokenType.RPAREN, "Expected ')'");
+        return expr;
+    }
+
+    IExpression ParseUnary(Token op) 
+    {
+        Advance();
+        IExpression right = ParseExpression(Precedence.Prefix);
+        return op.type switch
+        {
+            TokenType.SIN => Func.Sin(right), 
+            TokenType.COS => Func.Cos(right), 
+            TokenType.TAN => Func.Tan(right), 
+            TokenType.CSC => Func.Csc(right), 
+            TokenType.SEC => Func.Sec(right), 
+            TokenType.COT => Func.Cot(right), 
+            TokenType.LOG => Func.Log(right), 
+            TokenType.LN  => Func.Ln(right), 
+            TokenType.SUB => Func.Mul([new Number(-1), right]),
+
+            _ => throw new ArgumentOutOfRangeException(nameof(op))
+        };
+    }
+
+    IExpression ParseNary(IExpression left, Token op)
+    {
+        List<IExpression> operandList = [left]; 
+
+        do
+        {
+            Advance();
+            IExpression operand = ParseExpression(GetPrecedence(op.type));
+
+            operandList.Add(operand);
+        } while (Match(op.type));
+
+        return op.type switch
+        {
+            TokenType.ADD => Func.Add(operandList),
+            TokenType.MUL => Func.Mul(operandList),
+
+            _ => throw new ArgumentOutOfRangeException(nameof(op))
+        };
+    }
+
+    Power ParsePower(IExpression left, Token op)
+    {
+        Advance();
+        IExpression right = ParseExpression(GetPrecedence(op.type - 1));
+        return new(left, right);
+    }
+
+    IExpression ParseBinary(IExpression left, Token op)
+    {
+        Advance();
+        IExpression right = ParseExpression(GetPrecedence(op.type));
+        return op.type switch
+        {
+            TokenType.DIV 
+            when left is Number a 
+            && right is Number b 
+                => Func.Frac(a.value, b.value),
+            TokenType.SUB 
+                => Func.Add([left, new Product([new Number(-1), right])]),
+            TokenType.DIV   
+                => Func.Mul([left, new Power(right, new Number(-1))]),
+
+            _   => throw new ArgumentOutOfRangeException(nameof(op))
+        };
+    }
+
+    #region Pratt Parser
+    void Register(TokenType token, PrefixParselet parselet) 
+        => prefixParselets.Add(token, parselet);
+    void Register(TokenType token, InfixParselet parselet) 
+        => infixParselets.Add(token, parselet);
+
+    void Advance()
+    {
+        if (!IsAtEnd()) pos++;
+        current = tokens[pos - 1];
+        next = tokens[pos];
+    }
+
+    bool IsAtEnd() => next.type == TokenType.EOF;
+
+    void Consume(TokenType type, string err) 
+    {
+        if (next.type != type)
+            throw Derivate.ParserError(err, pos);
+        
+        Advance();
+    }
+
+    bool Match(TokenType type)
+    {
+        if (next.type != type)
+            return false;
+
+        Advance();
+        return true;
+    }
+
+    Precedence GetPrecedence(TokenType type) 
+        => precedence.TryGetValue(type, out var p) ? p : Precedence.Lowest;
+
+    public IExpression ParseExpression(Precedence precedence)
+    {
+        PrefixParselet prefix = prefixParselets.GetValueOrDefault(current.type) 
+            ?? throw Derivate.ParserError(
+                $"Expected a valid expression [{tokens[pos]}]", pos + 1
+            );
+
+        IExpression left = prefix(current);
+        while (precedence < GetPrecedence(next.type))
+        {
+            if (!infixParselets.TryGetValue(next.type, out var infix))
+                return left;
+
+            Advance();
+            left = infix(left, current);
+        }
+        return left;
+    }
+
+    public IExpression Parse() => ParseExpression(0);
+    #endregion
+}

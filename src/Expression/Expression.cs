@@ -17,13 +17,12 @@ public interface IExpression {
 [DebuggerDisplay("{this.ConvertToString()}")]
 public abstract record Constant: IExpression
 {
-    public abstract int numerator { get; }
-    public abstract int denominator { get; }
+    public abstract double GetValue();
     public bool CompareTo(IExpression gx)
     {
         return gx switch
         {
-            Constant n => numerator / denominator < n.numerator / n.denominator,
+            Constant n => GetValue() < n.GetValue(),
             _          => true,
         };
     }
@@ -31,8 +30,7 @@ public abstract record Constant: IExpression
 // TODO: Support arbitrary length integers (BigInteger)
 public sealed record Number(int value): Constant
 {
-    public override int numerator { get => value; }
-    public override int denominator { get => 1; }
+    public override double GetValue() => value;
 
     public static implicit operator Fraction(Number a) => new(a.value, 1);
 
@@ -60,16 +58,10 @@ public sealed record Number(int value): Constant
     }
 }
 // TODO: Support arbitrary length fraction (BigInteger)
-public sealed record Fraction: Constant
+public sealed record Fraction(int numerator, int denominator): Constant
 {
-    public override int numerator { get; }
-    public override int denominator { get; }
-    public Fraction(int _numerator, int _denominator)
-    {
-        numerator = _numerator;
-        denominator = _denominator;
-    }
-    
+    public override double GetValue() => numerator / denominator;
+
     public static Fraction operator +(Fraction a) => a;
     public static Fraction operator -(Fraction a) 
         => new(-a.numerator, a.denominator);
@@ -106,7 +98,7 @@ public sealed record Fraction: Constant
 // Symbols
 /// <summary>Represents an unknown mathematical object</summary>
 [DebuggerDisplay("{this.ConvertToString()}")]
-public abstract record Symbols(string identifier): IExpression
+public record Symbols(string identifier): IExpression
 {
     public const string Pi = "pi";
     public const string E = "e";
@@ -203,7 +195,7 @@ public sealed record Power(IExpression Base, IExpression Exponent) : IExpression
 /// <summary>Represents relations of a 
 /// set of inputs to a unique output</summary>
 [DebuggerDisplay("{this.ConvertToString()}")]
-public abstract record Function(IExpression value, string name) : IExpression
+public record Function(string name, IExpression value) : IExpression
 {
     public bool CompareTo(IExpression gx)
     {
@@ -221,14 +213,14 @@ public abstract record Function(IExpression value, string name) : IExpression
         };
     }
 }
-public sealed record Sine(IExpression value): Function(value, "sin") {}
-public sealed record Cosine(IExpression value): Function(value, "cos") {}
-public sealed record Tangent(IExpression value): Function(value, "tan") {}
-public sealed record Cosecant(IExpression value): Function(value, "csc") {}
-public sealed record Secant(IExpression value): Function(value, "sec") {}
-public sealed record Cotangent(IExpression value): Function(value, "cot") {}
-public sealed record Log(IExpression value, int Base): Function(value, "log") {}
-public sealed record NaturalLog(IExpression value): Function(value, "ln" ) {}
+public sealed record Sine(IExpression value): Function("sin", value) {}
+public sealed record Cosine(IExpression value): Function("cos", value) {}
+public sealed record Tangent(IExpression value): Function("tan", value) {}
+public sealed record Cosecant(IExpression value): Function("csc", value) {}
+public sealed record Secant(IExpression value): Function("sec", value) {}
+public sealed record Cotangent(IExpression value): Function("cot", value) {}
+public sealed record Log(IExpression value, int Base): Function("log", value) {}
+public sealed record NaturalLog(IExpression value): Function("ln", value) {}
 
 public static partial class Func
 {

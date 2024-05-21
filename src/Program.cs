@@ -7,15 +7,16 @@ public static partial class Derivate
         token.DebugPrint();
 
         var Parser = new Parser(token);
-        Node expr = Parser.Parse();
+        IExpression expr = Parser.Parse();
         expr.DebugPrint();
 
-        IExpression fx = expr.ToFunction().Simplify();
+        IExpression fx = expr.Simplify();
         fx.DebugPrint();
 
         IExpression derivative = fx.Dx();
         derivative.DebugPrint();
     }
+    
     public static void Main(string[] args)
     {
         while (true)

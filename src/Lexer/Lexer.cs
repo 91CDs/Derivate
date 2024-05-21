@@ -100,10 +100,10 @@ public static class Lexer
             "cot" => (Token.COT, ""),
             "log" => (Token.LOG, ""),
             "ln" => (Token.LN, ""),
-            ['p', 'i', .. var remaining] => (Token.CONST(Math.PI), remaining),
-            ['e', .. var remaining] => (Token.CONST(Math.E), remaining),
+            ['p', 'i', .. var remaining] => (Token.VAR("pi"), remaining),
+            ['e', .. var remaining] => (Token.VAR("e"), remaining),
             [var x, .. var remaining] 
-                when isVariable(x) => (Token.VAR(x), remaining),
+                when isVariable(x) => (Token.VAR(x.ToString()), remaining),
             _ => (Token.ILLEGAL, "")
         };
     }
@@ -112,14 +112,13 @@ public static class Lexer
     {
         // All pairs of tokens that have an implicit multiplication between them
         bool validPrevToken = new List<TokenType> { 
-            TokenType.INT, TokenType.FLOAT, TokenType.CONST, TokenType.VAR, 
+            TokenType.INT, TokenType.FLOAT, TokenType.VAR, 
             TokenType.RPAREN
         }.Contains(prevToken.type);
         bool validCurrentToken = new List<TokenType> { 
             TokenType.SIN, TokenType.COS, TokenType.TAN, 
             TokenType.CSC, TokenType.SEC, TokenType.COT, 
-            TokenType.LOG, TokenType.LN,
-            TokenType.CONST, TokenType.VAR, 
+            TokenType.LOG, TokenType.LN, TokenType.VAR, 
             TokenType.LPAREN
         }.Contains(currToken.type);
 

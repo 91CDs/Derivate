@@ -12,7 +12,7 @@ public class PolynomialTests
         bool expected)
     {
         var ast = new Parser(Lexer.ParseText(input)).Parse();
-        var expr = Evaluator.Simplify(ast.ToFunction());
+        var expr = Evaluator.Simplify(ast);
         var degree = expr.isGeneralPolynomial(vars);
 
         Assert.Equal(degree, expected);
@@ -26,7 +26,7 @@ public class PolynomialTests
         bool expected)
     {
         var ast = new Parser(Lexer.ParseText(input)).Parse();
-        var expr = Evaluator.Simplify(ast.ToFunction());
+        var expr = Evaluator.Simplify(ast);
         var degree = expr.isGeneralMonomial(vars);
 
         Assert.Equal(degree, expected);
@@ -40,7 +40,7 @@ public class PolynomialTests
         int expected)
     {
         var ast = new Parser(Lexer.ParseText(input)).Parse();
-        var expr = Evaluator.Simplify(ast.ToFunction());
+        var expr = Evaluator.Simplify(ast);
         var degree = expr.Degree(vars);
 
         Assert.Equal(degree, expected);
@@ -54,7 +54,7 @@ public class PolynomialTests
         IExpression expected)
     {
         var ast = new Parser(Lexer.ParseText(input)).Parse();
-        var expr = Evaluator.Simplify(ast.ToFunction());
+        var expr = Evaluator.Simplify(ast);
         var term = expr.LeadingCoefficient(var);
 
         Assert.Equal(term.ConvertToString(), expected.Simplify().ConvertToString());
@@ -67,7 +67,7 @@ public class PolynomialTests
         HashSet<IExpression> expected)
     {
         var ast = new Parser(Lexer.ParseText(input)).Parse();
-        var expr = Evaluator.Simplify(ast.ToFunction());
+        var expr = Evaluator.Simplify(ast);
         var degree = expr.GetVariables();
 
         Assert.Equal(degree, expected);
@@ -82,12 +82,9 @@ public class PolynomialTests
         IExpression expectedQuot,
         IExpression expectedRem)
     {
-        var dividend = new Parser(Lexer.ParseText(input)).Parse()
-            .ToFunction().Simplify();
-        var divisor = new Parser(Lexer.ParseText(input2)).Parse()
-            .ToFunction().Simplify();
-        var variable = new Parser(Lexer.ParseText(input3)).Parse()
-            .ToFunction().Simplify();
+        var dividend = new Parser(Lexer.ParseText(input)).Parse().Simplify();
+        var divisor = new Parser(Lexer.ParseText(input2)).Parse().Simplify();
+        var variable = new Parser(Lexer.ParseText(input3)).Parse().Simplify();
         var (quot, rem) = dividend.DivRem(divisor, variable);
 
         Assert.Equal(quot, expectedQuot.Simplify());

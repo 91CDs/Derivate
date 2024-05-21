@@ -1,6 +1,3 @@
-using System.Diagnostics;
-using System.Text;
-
 namespace Derivate;
 
 public enum TokenType
@@ -9,7 +6,7 @@ public enum TokenType
     LOG, LN,                        // Non Algebraic
     SIN, COS, TAN, CSC, SEC, COT,   // Trigonometric
     LPAREN, RPAREN,
-    INT, FLOAT, CONST,
+    INT, FLOAT,
     VAR,
     ILLEGAL,
     EOF,
@@ -22,9 +19,7 @@ public readonly record struct Token(TokenType type, object value)
 
     public static Token INT(int number) => new Token(TokenType.INT, number);
     public static Token FLOAT(double number) => new Token(TokenType.FLOAT, number);
-    public static Token CONST(double constant) => new Token(TokenType.CONST, constant);
     public static Token VAR(string variable) => new Token(TokenType.VAR, variable);
-    public static Token VAR(char variable) => new Token(TokenType.VAR, variable.ToString());
 
     public static readonly Token SUB = new Token(TokenType.SUB, "-");
     public static readonly Token ADD = new Token(TokenType.ADD, "+");
@@ -42,26 +37,7 @@ public readonly record struct Token(TokenType type, object value)
     public static readonly Token LPAREN = new Token(TokenType.LPAREN, "(");
     public static readonly Token RPAREN = new Token(TokenType.RPAREN, ")");
 
-    public override string ToString()
-    {
-        StringBuilder str = new StringBuilder($"{type}:");
-        var valueStr = type switch {
-            TokenType.CONST => MathConstants((double) value),
-            _ => value,
-        };
-        str.Append(valueStr);
-        return str.ToString();
-    }
-
-    public static string MathConstants(double constant) 
-    {
-        return constant switch
-        {
-            Math.PI => "pi",
-            Math.E => "e",
-            _ => throw new UnreachableException(),
-        };
-    }
+    public override string ToString() => $"{type}:{value}";
 }
 
 public static class TokenExtensions

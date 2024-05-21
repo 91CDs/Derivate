@@ -8,10 +8,10 @@ public class SimplifyTests
 {
     [Theory]
     [ClassData(typeof(SimplifyTestData))]
-    public void eval_PowerRule(string input, IExpression expected)
+    public void Simplify_SimplifyExpressions(string input, IExpression expected)
     {
         var ast = new Parser(Lexer.ParseText(input)).Parse();
-        var expr = Evaluator.Simplify(ast.ToFunction());
+        var expr = Evaluator.Simplify(ast);
 
         Assert.Equal(expr.ConvertToString(), expected.ConvertToString());
     }
